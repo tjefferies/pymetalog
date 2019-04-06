@@ -1,6 +1,6 @@
 pymetalog
 ================
-Travis Jefferies and Isaac J. Faber
+Colin Smith, Travis Jefferies, Isaac J. Faber
 
 ### The Python Metalog Distribution
 
