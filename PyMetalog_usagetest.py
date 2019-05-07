@@ -5,12 +5,15 @@ import pymetalog as pm
 
 fish_data = np.loadtxt('fishout.csv', delimiter=',', skiprows=1, dtype='str')[:,1].astype(np.float)
 
+m1 = np.loadtxt('L_G_W for 3D 3.csv', delimiter=',', skiprows=1, dtype='str')[:,1].astype(np.float)
+m2 = np.loadtxt('L_G_W for 3D 3.csv', delimiter=',', skiprows=1, dtype='str')[:,0].astype(np.float)
+
 # metalog creation
-fish_metalog = pm.metalog(x=fish_data, bounds=[0,60], boundedness='b', term_limit=9, term_lower_bound=2, step_len=.01,)
+fish_metalog = pm.metalog(x=([1,1,1,2,2,2,2,2,2,2,2,2,2],[2,2,2,2,2,2,2,2,2,2,2]), bounds=[0,60], boundedness='b', term_limit=9, term_lower_bound=2, step_len=.01,)
 
 # summary function
 pm.summary(fish_metalog)
-
+'''
 # plot function - right now this saves plots to local
 pm.plot(fish_metalog)
 plt.show()
@@ -31,3 +34,4 @@ print("pmetalog demo: "+str(ps))
 # density from a quantile
 ds = pm.dmetalog(fish_metalog, q = [3, 10, 25], term = 9)
 print("dmetalog demo: "+str(ds))
+'''

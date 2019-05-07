@@ -14,30 +14,33 @@ class metalog():
         self.probs = probs
         self.fit_method = fit_method
 
-        if probs == None:
-            df_x = MLprobs(self.x, step_len=step_len)
+        if type(self.x) == tuple:
+            self.correlated_metalogs()
 
+        self.data = {}
+        if probs == None:
+            self.data = MLprobs(self.x, step_len=step_len)
         else:
-            df_x = pd.DataFrame()
-            df_x['x'] = self.x
-            df_x['probs'] = self.probs
+            self.data['x'] = self.x
+            self.data['probs'] = self.probs
 
         output_list = {}
 
         # build z vector based on boundedness
-        df_x = self.append_zvector(df_x)
+        self.data = self.append_zvector(self.data)
 
         output_list['params'] = self.get_params()
-        output_list['dataValues'] = df_x
+        output_list['dataValues'] = self.data
 
         # Construct the Y Matrix initial values
+        #Y = {}
         Y = pd.DataFrame()
-        Y['y1'] = np.repeat([1], len(df_x['x']))
-        Y['y2'] = np.log(df_x['probs'] / (1 - df_x['probs']))
-        Y['y3'] = (df_x['probs'] - 0.5) * Y['y2']
+        Y['y1'] = np.repeat([1], len(self.data['x']))
+        Y['y2'] = np.log(self.data['probs'] / (1 - self.data['probs']))
+        Y['y3'] = (self.data['probs'] - 0.5) * Y['y2']
 
         if self.term_limit > 3:
-            Y['y4'] = df_x['probs'] - 0.5
+            Y['y4'] = self.data['probs'] - 0.5
 
          # Complete the values through the term limit
         if (term_limit > 4):
@@ -71,12 +74,12 @@ class metalog():
 
     @x.setter
     def x(self, xs):
-        if (type(xs) != list) and (type(xs) != np.ndarray):
-            raise TypeError('Input x must be an array')
-        if not all(isinstance(x, (int, float, np.int64, np.float64)) for x in xs):
+        if (type(xs) != list) and (type(xs) != np.ndarray) and (type(xs) != tuple):
+            raise TypeError('Input x must be an array or Tuple of arrays')
+        if not all(isinstance(x, (int, float, np.int64, np.float64)) for x in xs) and not all(all(isinstance(x, (int, float, np.int64, np.float64)) for x in xi) for xi in xs):
             raise TypeError('Input x must be an array of allowable types: int, float, numpy.int64, or numpy.float64')
-        if np.size(xs) < 3:
-            raise IndexError('Input x must be of length 3 or greater')
+        if (type(xs) != tuple and np.size(xs) < 3) or (type(xs) == tuple and any(np.size(xi) < 3 for xi in xs)):
+            raise IndexError('Input x or all xs in tuple of inputs x must be of length 3 or greater')
         self._x = xs
 
     @property
@@ -127,8 +130,9 @@ class metalog():
             raise TypeError('term_limit parameter should be an integer between 3 and 30')
         if tl > 30 or tl < 3:
             raise ValueError('term_limit parameter should be an integer between 3 and 30')
-        if tl > len(self.x):
-            raise ValueError('term_limit must be less than or equal to the length of the vector x')
+        if (type(self.x) != tuple and tl > len(self.x)) or \
+                (type(self.x) == tuple and any(tl > len(xi) for xi in self.x)):
+            raise ValueError('term_limit must be less than or equal to the length of the input vector(s) x')
         self._term_limit = tl
 
     @property
@@ -209,6 +213,10 @@ class metalog():
             df_x['z'] = np.log(np.array(((df_x['x'] - self.bounds[0])/(self.bounds[1]-df_x['x'])), dtype=np.float64))
 
         return df_x
+
+    def correlated_metalogs(self):
+        print('smoo')
+        pass
 
     def __getitem__(self):
         return self.output_list

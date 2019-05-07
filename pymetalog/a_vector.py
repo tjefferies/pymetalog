@@ -27,6 +27,9 @@ def a_vector_OLS_and_LP(m_list,
 
     # TODO: Large for-loop can probably be factored into smaller functions
     for i in range(term_lower_bound,term_limit+1):
+        z = np.array(list(m_list['Y'].items()))[:,0:i].T
+        #y = np.column_stack(i for i in list(m_list['Y'].items()))
+        y = np.column_stack(i for i in list(m_list['Y']))
         Y = m_list['Y'].iloc[:,0:i]
         z = m_list['dataValues']['z']
         y = m_list['dataValues']['probs']
@@ -116,7 +119,7 @@ def a_vector_LP(m_list, term_limit, term_lower_bound, diff_error = .001, diff_st
     cnames = np.array([])
 
     for i in range(term_lower_bound, term_limit + 1):
-        Y = m_list['Y'].iloc[:, 0:i]
+        Y = np.array(list(m_list['Y'].items()),  dtype='f8')[1:, 0:i]
         z = m_list['dataValues']['z']
 
         # Bulding the objective function using abs value LP formulation
