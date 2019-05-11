@@ -8,7 +8,7 @@ class metalog():
         """Fits a metalog distribution using the input array `x`.
 
         Args:
-            x (:obj:`list` | `numpy.ndarray`): Input data to fit a metalog to.
+            x (:obj:`list` | `numpy.ndarray` | `pandas.Series`): Input data to fit a metalog to.
                 - must be an array of allowable types: int, float, numpy.int64, numpy.float64
 
             bounds (:obj:`list`, optional): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs.
@@ -159,14 +159,16 @@ class metalog():
     # input validation...
     @property
     def x(self):
-        """x (list | numpy.ndarray): Input data to fit a metalog to."""
+        """x (:obj:`list` | `numpy.ndarray` | `pandas.Series`): Input data to fit a metalog to."""
         
         return self._x
 
     @x.setter
     def x(self, xs):
-        if (type(xs) != list) and (type(xs) != np.ndarray):
-            raise TypeError('Input x must be an array')
+        if (type(xs) != list) and (type(xs) != np.ndarray) and (type(xs) != pd.Series):
+            raise TypeError('Input x must be an array or pandas Series')
+        if isinstance(xs, pd.Series):
+            xs = xs.values.copy()
         if not all(isinstance(x, (int, float, np.int64, np.float64)) for x in xs):
             raise TypeError('Input x must be an array of allowable types: int, float, numpy.int64, or numpy.float64')
         if np.size(xs) < 3:
