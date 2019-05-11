@@ -27,7 +27,6 @@ class metalog():
                     * len(bounds) must == 2
                     * bounds[1] must be > bounds[0]
 
-
             term_limit (:obj:`int`, optional): The upper limit of the range of a coefficients to generate.
                 - strictly > term_lower_bound
                 - in range [3,30]
@@ -95,8 +94,8 @@ class metalog():
             ValueError: 'Input probabilities must have values between, not including, 0 and 1'
             ValueError: 'fit_method can only be values OLS, LP, any, or MLE'
 
-
         """
+
         self.x = x
         self.boundedness = boundedness
         self.bounds = bounds
@@ -293,8 +292,6 @@ class metalog():
         if fm != 'OLS' and fm != 'LP' and fm != 'any' and fm != 'MLE':
             raise ValueError('fit_method can only be values OLS, LP, any, or MLE')
         self._fit_method = fm
-
-
 
     def get_params(self):
         """Sets the `params` key (dict) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
