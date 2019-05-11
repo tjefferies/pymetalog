@@ -8,15 +8,15 @@ class metalog():
         """Fits a metalog distribution using the input array `x`.
 
         Args:
-            x (list | numpy.ndarray): Input data to fit a metalog to.
+            x (:obj:`list` | `numpy.ndarray`): Input data to fit a metalog to.
                 - must be an array of allowable types: int, float, numpy.int64, numpy.float64
 
             bounds (:obj:`list`, optional): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs.
                 - should be set in conjunction with the `boundedness` parameter
                 - Default: [0,1]
 
-            boundedness (:obj:`str`, optional): String that is used to specify the type of metalog to fit
-                - in set ('u','sl','su','b')
+            boundedness (:obj:`str`, optional): String that is used to specify the type of metalog to fit.
+                - must be in set ('u','sl','su','b')
                 - Default: 'u'
                     * Fits an unbounded metalog
                 - 'sl' fits a strictly lower bounded metalog
@@ -37,14 +37,14 @@ class metalog():
                 - in range [2,29]
 
             step_len (:obj:`float`, optional): Used to specify the bin width used to estimate the metalog.
-                - in range [0.001, 0.01]
+                - must be in range [0.001, 0.01]
 
             probs (:obj:`list` | `numpy.ndarray`, optional): Probabilities associated with the data values in x.
                 - must be an array of integer or float data
-                - in range [0,1]
+                - must be in range [0,1]
 
             fit_method (:obj:`str`, optional): Fit method to use to fit metalog distribution.
-                - in set ('any','OLS','LP','MLE')
+                - must be in set ('any','OLS','LP','MLE')
                 - Default: 'any'
                     * first tries 'OLS' method than 'LP'
                 - 'OLS' only tries to fit by solving directly for a coefficients using ordinary least squares method
@@ -159,6 +159,8 @@ class metalog():
     # input validation...
     @property
     def x(self):
+        """x (list | numpy.ndarray): Input data to fit a metalog to."""
+        
         return self._x
 
     @x.setter
@@ -173,6 +175,8 @@ class metalog():
 
     @property
     def bounds(self):
+        """bounds (:obj:`list`, optional): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs."""
+        
         return self._bounds
 
     @bounds.setter
@@ -201,6 +205,8 @@ class metalog():
 
     @property
     def boundedness(self):
+        """boundedness (:obj:`str`, optional): String that is used to specify the type of metalog to fit."""
+        
         return self._boundedness
 
     @boundedness.setter
@@ -211,6 +217,8 @@ class metalog():
 
     @property
     def term_limit(self):
+        """term_limit (:obj:`int`, optional): The upper limit of the range of a coefficients to generate."""
+        
         return self._term_limit
 
     @term_limit.setter
@@ -225,6 +233,8 @@ class metalog():
 
     @property
     def term_lower_bound(self):
+        """term_lower_bound (:obj:`int`, optional): The lower limit of the range of a coefficients to generate."""
+        
         return self._term_lower_bound
 
     @term_lower_bound.setter
@@ -239,6 +249,8 @@ class metalog():
 
     @property
     def step_len(self):
+        """step_len (:obj:`float`, optional): Used to specify the bin width used to estimate the metalog."""
+        
         return self._step_len
 
     @step_len.setter
@@ -249,6 +261,8 @@ class metalog():
 
     @property
     def probs(self):
+        """probs (:obj:`list` | `numpy.ndarray`, optional): Probabilities associated with the data values in x."""
+        
         return self._probs
 
     @probs.setter
@@ -268,6 +282,8 @@ class metalog():
 
     @property
     def fit_method(self):
+        """fit_method (:obj:`str`, optional): Fit method to use to fit metalog distribution."""
+
         return self._fit_method
 
     @fit_method.setter
@@ -279,6 +295,14 @@ class metalog():
 
 
     def get_params(self):
+        """Sets the `params` key (dict) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
+            - Uses metalog attributes to set keys
+
+        Returns:
+            params: (:obj:`dict`): Dictionary that is used as input to `a_vector_OLS_and_LP` method.
+
+        """
+
         params = {}
         params['bounds'] = self.bounds
         params['boundedness'] = self.boundedness
@@ -290,7 +314,20 @@ class metalog():
         return params
 
     def append_zvector(self, df_x):
-        # Build the z vector based on the boundedness
+        """Sets the `dataValues` key (pandas.DataFrame) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
+            
+            - Uses `boundedness` attribute to set z vector
+            - 'u': output_dict['dataValues']['z'] = x
+                * Start with all the input data
+            - 'sl': output_dict['dataValues']['z'] = log( (x-lower_bound) )
+            - 'su': output_dict['dataValues']['z'] = log( (upper_bound-x) )
+            - 'b': output_dict['dataValues']['z'] = log( (x-lower_bound) / (upper_bound-x) )
+
+        Returns:
+            df_x: (:obj:`pandas.DataFrame` with columns [`x`,`z`] of type numeric): DataFrame that is used as input to `a_vector_OLS_and_LP` method.
+
+        """
+
         if self.boundedness == 'u':
             df_x['z'] = df_x['x']
         if self.boundedness == 'sl':

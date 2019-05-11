@@ -5,9 +5,9 @@ import seaborn as sns
 from .support import newtons_method_metalog, pdfMetalog_density
 
 def summary(m):
-    """TODO: write docstring
+  """TODO: write docstring
 
-    """
+  """
   print(' -----------------------------------------------\n',
       'Summary of Metalog Distribution Object\n',
       '-----------------------------------------------\n',
@@ -84,9 +84,9 @@ def rmetalog(m, n = 1, term = 2, generator = 'rand'):
   return(s)
 
 def dmetalog(m, q, term = 3):
-    """TODO: write docstring
+  """TODO: write docstring
 
-    """
+  """
   valid_terms = np.asarray(m.output_dict['Validation']['term'])
 
   if (term not in valid_terms) or type(term) != int:
@@ -100,9 +100,9 @@ def dmetalog(m, q, term = 3):
 
 
 def pmetalog(m, q, term = 3):
-    """TODO: write docstring
+  """TODO: write docstring
 
-    """
+  """
   valid_terms = np.asarray(m.output_dict['Validation']['term'])
 
   if type(q) != list:
@@ -119,9 +119,9 @@ def pmetalog(m, q, term = 3):
 
 
 def qmetalog(m, y, term = 3):
-    """TODO: write docstring
+  """TODO: write docstring
 
-    """
+  """
   m = m.output_dict
   valid_terms = np.asarray(m['Validation']['term'])
   valid_terms_printout = " ".join(str(t) for t in valid_terms)
@@ -173,9 +173,9 @@ def qmetalog(m, y, term = 3):
 
 
 def plot(x):
-    """TODO: write docstring
+  """TODO: write docstring
 
-    """
+  """
   x = x.output_dict
   # build plots
   InitalResults = pd.DataFrame(data={
