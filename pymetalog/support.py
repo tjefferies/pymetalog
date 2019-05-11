@@ -2,8 +2,13 @@ import pandas as pd
 import numpy as np
 
 
-
 def MLprobs(x_old, step_len):
+    """
+    #TODO: Write Docstring
+    :param x_old: 
+    :param step_len: 
+    :return: 
+    """
     l = len(x_old)
     x = pd.DataFrame()
     x['x'] = x_old
@@ -211,7 +216,7 @@ def newtons_method_metalog(m,q,term, bounds=None, boundedness=None):
 
   # if m is metalog
   try:
-    m = m.output_list
+    m = m.output_dict
     avec = 'a' + str(term)
     a = m['A'][avec]
   except:
@@ -246,7 +251,7 @@ def newtons_method_metalog(m,q,term, bounds=None, boundedness=None):
   return(y_now)
 
 def pdfMetalog_density(m,t,y):
-  m = m.output_list
+  m = m.output_dict
   avec = 'a' + str(t)
   a = m['A'][avec]
   bounds = m['params']['bounds']

@@ -9,7 +9,7 @@ import time
 
 import warnings
 
-def a_vector_OLS_and_LP(m_list,
+def a_vector_OLS_and_LP(m_dict,
            term_limit,
            term_lower_bound,
            bounds,
@@ -17,6 +17,10 @@ def a_vector_OLS_and_LP(m_list,
            fit_method,
            diff_error = .001,
            diff_step = 0.001):
+
+    """TODO: write docstring
+
+    """
 
     # Some place holder values
     A = pd.DataFrame()
@@ -27,10 +31,10 @@ def a_vector_OLS_and_LP(m_list,
 
     # TODO: Large for-loop can probably be factored into smaller functions
     for i in range(term_lower_bound,term_limit+1):
-        Y = m_list['Y'].iloc[:,0:i]
-        z = m_list['dataValues']['z']
-        y = m_list['dataValues']['probs']
-        step_len = m_list['params']['step_len']
+        Y = m_dict['Y'].iloc[:,0:i]
+        z = m_dict['dataValues']['z']
+        y = m_dict['dataValues']['probs']
+        step_len = m_dict['params']['step_len']
         methodFit = 'OLS'
         a_name = 'a'+str(i)
         m_name = 'm'+str(i)
@@ -42,7 +46,7 @@ def a_vector_OLS_and_LP(m_list,
             try:
                 temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y)), Y.T), z)
             except:
-                temp = a_vector_LP(m_list, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
+                temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
                 # use LP solver if OLS breaks
         if fit_method == 'OLS':
             try:
@@ -50,13 +54,13 @@ def a_vector_OLS_and_LP(m_list,
             except:
                 raise RuntimeError("OLS was unable to solve infeasible or poorly formulated problem")
         if fit_method == "LP":
-                temp = a_vector_LP(m_list, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
+                temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
 
 
         temp = np.append(temp, np.repeat(0,(term_limit-i)))
 
         if fit_method == 'MLE':
-            temp = a_vector_MLE(temp, y, i, m_list, bounds, boundedness)
+            temp = a_vector_MLE(temp, y, i, m_dict, bounds, boundedness)
             tempList = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
         # build a y vector for smaller data sets
@@ -72,7 +76,7 @@ def a_vector_OLS_and_LP(m_list,
 
         # If it not a valid pdf run and the OLS version was used the LP version
         if (tempList['valid'] == 'no') and (fit_method != 'OLS'):
-            temp = a_vector_LP(m_list, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
+            temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
             temp = np.append(temp, np.repeat(0, (term_limit - i)))
             methodFit = 'Linear Program'
 
@@ -103,21 +107,24 @@ def a_vector_OLS_and_LP(m_list,
     A.columns = c_a_names
     Mh.columns = c_m_names
 
-    m_list['A'] = A
-    m_list['M'] = Mh
-    m_list['M']['y'] = tempList['y']
-    m_list['Validation'] = Validation
+    m_dict['A'] = A
+    m_dict['M'] = Mh
+    m_dict['M']['y'] = tempList['y']
+    m_dict['Validation'] = Validation
 
 
 
-    return m_list
+    return m_dict
 
-def a_vector_LP(m_list, term_limit, term_lower_bound, diff_error = .001, diff_step = 0.001):
+def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_step = 0.001):
+    """TODO: write docstring
+
+    """
     cnames = np.array([])
 
     for i in range(term_lower_bound, term_limit + 1):
-        Y = m_list['Y'].iloc[:, 0:i]
-        z = m_list['dataValues']['z']
+        Y = m_dict['Y'].iloc[:, 0:i]
+        z = m_dict['dataValues']['z']
 
         # Bulding the objective function using abs value LP formulation
         Y_neg = -Y
@@ -189,31 +196,34 @@ def a_vector_LP(m_list, term_limit, term_lower_bound, diff_error = .001, diff_st
     return temp
 
 
-def a_vector_MLE(a, y, term, m_list, bounds, boundedness):
-    ym = [newtons_method_metalog(a, xi, term, bounds, boundedness) for xi in m_list['dataValues']['x']]
+def a_vector_MLE(a, y, term, m_dict, bounds, boundedness):
+    """TODO: write docstring
+
+    """
+    ym = [newtons_method_metalog(a, xi, term, bounds, boundedness) for xi in m_dict['dataValues']['x']]
 
     def MLE_quantile_constraints(x):
         M = [quantileMetalog(x[:term], yi, term, bounds=bounds, boundedness=boundedness) for yi in x[term:]]
-        return m_list['dataValues']['x'] - M
+        return m_dict['dataValues']['x'] - M
 
-    def MLE_objective_function(x, y, term, m_list):
+    def MLE_objective_function(x, y, term, m_dict):
         return -np.sum([np.log10(pdfMetalog(x[:term], yi, term, bounds, boundedness)) for yi in np.absolute(x[term:])])
 
-    m_list[str('MLE' + str(term))] = {}
+    m_dict[str('MLE' + str(term))] = {}
 
     x0 = np.hstack((a[:term],ym))
-    m_list[str('MLE' + str(term))]['oldobj'] = -MLE_objective_function(x0, y, term, m_list)
+    m_dict[str('MLE' + str(term))]['oldobj'] = -MLE_objective_function(x0, y, term, m_dict)
     bnd = ((None, None),)*len(a)+((0, 1),)*(len(x0)-len(a))
     con = NonlinearConstraint(MLE_quantile_constraints, 0, 0)
 
-    mle = minimize(MLE_objective_function, x0, args=(y, term, m_list), bounds=bnd, constraints=con)
+    mle = minimize(MLE_objective_function, x0, args=(y, term, m_dict), bounds=bnd, constraints=con)
 
-    m_list[str('MLE' + str(term))]['newobj'] = -MLE_objective_function(mle.x, y, term, m_list)
-    m_list[str('MLE'+str(term))]['A'] = mle.x[:term]
-    m_list[str('MLE'+str(term))]['Y'] = mle.x[term:]
+    m_dict[str('MLE' + str(term))]['newobj'] = -MLE_objective_function(mle.x, y, term, m_dict)
+    m_dict[str('MLE'+str(term))]['A'] = mle.x[:term]
+    m_dict[str('MLE'+str(term))]['Y'] = mle.x[term:]
 
-    m_list[str('MLE' + str(term))]['oldA'] = a
-    m_list[str('MLE' + str(term))]['oldY'] = y
+    m_dict[str('MLE' + str(term))]['oldA'] = a
+    m_dict[str('MLE' + str(term))]['oldY'] = y
 
     out_temp = np.zeros_like(a)
     for i in range(term):
