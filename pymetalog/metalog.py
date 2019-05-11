@@ -68,7 +68,7 @@ class metalog():
                 plt.show()
 
         Raises:
-            TypeError: 'Input x must be an array'
+            TypeError: 'Input x must be an array or pandas Series'
             TypeError: 'Input x must be an array of allowable types: int, float, numpy.int64, or numpy.float64'
             TypeError: 'bounds parameter must be of type list'
             TypeError: 'bounds parameter must be list of integers'
