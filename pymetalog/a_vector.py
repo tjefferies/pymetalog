@@ -159,7 +159,7 @@ def a_vector_OLS_and_LP(m_dict,
             y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), ((tailstep * 9) / tailstep))
             y = np.hstack((y1, y2, y3))
 
-        # Get the list and quantile values back for validation
+        # Get the dict and quantile values back for validation
         temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
         # If it not a valid pdf run and the OLS version was used the LP version
@@ -168,7 +168,7 @@ def a_vector_OLS_and_LP(m_dict,
             temp = np.append(temp, np.zeros(term_limit-i))
             methodFit = 'Linear Program'
 
-            # Get the list and quantile values back for validation
+            # Get the dict and quantile values back for validation
             temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
         if len(Mh) != 0:

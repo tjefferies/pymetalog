@@ -16,7 +16,7 @@ pm.plot(fish_metalog)
 plt.show()
 
 # metalog random sampling
-r_gens = pm.rmetalog(fish_metalog, n = 1000, term = 9)
+r_gens = pm.rmetalog(fish_metalog, n = 1000, term = 9, generator='hdr')
 plt.hist(r_gens,14)
 plt.show()
 
