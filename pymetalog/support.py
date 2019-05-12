@@ -7,10 +7,10 @@ def MLprobs(x_old, step_len):
       Called during metalog.__init__ method call.
 
       Args:
-      x_old (:obj:`list` | `numpy.ndarray` | `pandas.Series`): Input data to fit the metalog distribution to.
-        - must be an array of allowable types: int, float, numpy.int64, numpy.float64
+        x_old (:obj: `numpy.ndarray` of type numeric): Input data to fit the metalog distribution to.
+          - must be an array of allowable types: int, float, numpy.int64, numpy.float64
 
-      step_len (:obj:`float`): Used to specify the bin width used to estimate the metalog.
+        step_len (:obj:`float`): Used to specify the bin width used to estimate the metalog.
 
       Returns:
         x: (:obj:`dict` with keys ['x','probs']  of type float):
@@ -57,10 +57,40 @@ def MLprobs(x_old, step_len):
   return x
 
 def pdfMetalog(a, y, t, bounds = [], boundedness = 'u'):
-  """TODO: write docstring
+  """ Estimates the metalog pdf given the a coefficients and percentiles found using the specified metalog.fit_method attribute.
+      Called during metalog.__init__ method call if `fit_method`='MLE'.
+      Called during pdf_quantile_builder method call.
+
+      Args:
+        a (:obj: `numpy.ndarray` of type float): Array of a coefficients found by fitting metalog distribution using the `fit_method` parameter.
+
+        y (:obj: `numpy.ndarray` of type float): Array of bin widths specified for `a` parameter
+
+        t (:obj: `int`): The upper limit of the range of metalog terms to use to fit the data.
+          - metalog.term_limit attribute
+          - in range [3,30]
+
+        bounds (:obj: `list`, optional): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs.
+            - should be set in conjunction with the `boundedness` parameter
+            - Default: [0,1]
+
+        boundedness (:obj: `str`, optional): String that is used to specify the type of metalog to fit.
+            - must be in set ('u','sl','su','b')
+            - Default: 'u'
+                * Fits an unbounded metalog
+                * If `boundedness` parameter != 'u' we must calculate the metalog quantiles using an unbounded metalog, via the `quantileMetalog` method.
+            - 'sl' fits a strictly lower bounded metalog
+                * len(bounds) must == 1
+            - 'su' fits a strictly upper bounded metalog
+                * len(bounds) must == 1
+            - 'b' fits a upper/lower bounded metalog
+                * len(bounds) must == 2
+                * bounds[1] must be > bounds[0]
+
+      Returns:
+        x: (:obj: `numpy.ndarray` of type float): Array of metalog pdf values.
 
   """
-  #print(str(y)+" smoo")
   if y <= 0:
       y = .00001
 
@@ -118,10 +148,41 @@ def pdfMetalog(a, y, t, bounds = [], boundedness = 'u'):
   if x <= 0:
       x=.00001
   #print(str(x) + " zoop")
+
   return x
 
 def quantileMetalog(a, y, t, bounds = [], boundedness = 'u'):
-  """TODO: write docstring
+  """ Estimates the metalog quantiles given the a coefficients and percentiles found using the specified metalog.fit_method attribute.
+      Called during metalog.__init__ method call if `fit_method`='MLE'.
+      Called during pdf_quantile_builder method call.
+
+      Args:
+        a (:obj: `numpy.ndarray` of type float): Array of a coefficients found by fitting metalog distribution using the `fit_method` parameter.
+
+        y (:obj: `numpy.ndarray` of type float): Array of bin widths specified for `a` parameter
+
+        t (:obj: `int`): The upper limit of the range of metalog terms to use to fit the data.
+          - metalog.term_limit attribute
+          - in range [3,30]
+
+        bounds (:obj: `list`, optional): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs.
+            - should be set in conjunction with the `boundedness` parameter
+            - Default: [0,1]
+
+        boundedness (:obj: `str`, optional): String that is used to specify the type of metalog to fit.
+            - must be in set ('u','sl','su','b')
+            - Default: 'u'
+                * Fits an unbounded metalog
+            - 'sl' fits a strictly lower bounded metalog
+                * len(bounds) must == 1
+            - 'su' fits a strictly upper bounded metalog
+                * len(bounds) must == 1
+            - 'b' fits a upper/lower bounded metalog
+                * len(bounds) must == 2
+                * bounds[1] must be > bounds[0]
+
+      Returns:
+        x: (:obj: `numpy.ndarray` of type float): Array of metalog quantile values.
 
   """
   if y <= 0:
@@ -137,7 +198,6 @@ def quantileMetalog(a, y, t, bounds = [], boundedness = 'u'):
   x = a[0] + a[1] * l
   if t > 2:
       x = x + a[2] * f * l
-
 
   # For the fourth term
   if t > 3:
