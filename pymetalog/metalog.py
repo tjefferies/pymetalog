@@ -3,12 +3,13 @@ import pandas as pd
 from .support import MLprobs
 from .a_vector import a_vector_OLS_and_LP
 
+
 class metalog():
     def __init__(self, x, bounds=[0,1], boundedness='u', term_limit=13, term_lower_bound=2, step_len=.01, probs=None, fit_method='any'):
         """Fits a metalog distribution using the input array `x`.
 
         Args:
-            x (:obj:`list` | `numpy.ndarray` | `pandas.Series`): Input data to fit a metalog to.
+            x (:obj:`list` | `numpy.ndarray` | `pandas.Series`): Input data to fit the metalog distribution to.
                 - must be an array of allowable types: int, float, numpy.int64, numpy.float64
 
             bounds (:obj:`list`, optional): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs.
@@ -27,11 +28,11 @@ class metalog():
                     * len(bounds) must == 2
                     * bounds[1] must be > bounds[0]
 
-            term_limit (:obj:`int`, optional): The upper limit of the range of a coefficients to generate.
+            term_limit (:obj:`int`, optional): The upper limit of the range of metalog terms to use to fit the data.
                 - strictly > term_lower_bound
                 - in range [3,30]
 
-            term_lower_bound (:obj:`int`, optional): The lower limit of the range of a coefficients to generate.
+            term_lower_bound (:obj:`int`, optional): The lower limit of the range of metalog terms to use to fit the data.
                 - strictly < term_limit
                 - in range [2,29]
 
@@ -49,22 +50,6 @@ class metalog():
                 - 'OLS' only tries to fit by solving directly for a coefficients using ordinary least squares method
                 - 'LP' only tries to estimate fit using simplex linear program optimization routine
                 - 'MLE' first tries 'OLS' method than falls back to a maximum likelihood estimation routine
-
-        Example:
-
-            Fit a metalog to a numpy.ndarray of numeric data.
-            
-            >>> import numpy as np
-                import pandas as pd
-                import matplotlib.pyplot as plt
-                import pymetalog as pm
-
-            >>> fish_data = np.loadtxt('fishout.csv', delimiter=',', skiprows=1, dtype='str')[:,1].astype(np.float)
-            >>> fish_metalog = pm.metalog(x=fish_data, bounds=[0,60], boundedness='b', term_limit=9, term_lower_bound=2, step_len=.001,)
-            >>> pm.summary(fish_metalog)
-            >>> # plot function - right now this saves plots to local
-                pm.plot(fish_metalog)
-                plt.show()
 
         Raises:
             TypeError: 'Input x must be an array or pandas Series'
@@ -94,11 +79,27 @@ class metalog():
             ValueError: 'Input probabilities must have values between, not including, 0 and 1'
             ValueError: 'fit_method can only be values OLS, LP, any, or MLE'
 
+        Example:
+
+            Fit a metalog to a numpy.ndarray of numeric data.
+            
+            >>> import numpy as np
+                import pandas as pd
+                import matplotlib.pyplot as plt
+                import pymetalog as pm
+
+            >>> fish_data = np.loadtxt('fishout.csv', delimiter=',', skiprows=1, dtype='str')[:,1].astype(np.float)
+            >>> fish_metalog = pm.metalog(x=fish_data, bounds=[0,60], boundedness='b', term_limit=9, term_lower_bound=2, step_len=.001,)
+            >>> pm.summary(fish_metalog)
+            >>> # plot function - right now this saves plots to local
+                pm.plot(fish_metalog)
+                plt.show()
+
         """
 
-        self.x = x
+        self.x = x.copy()
         self.boundedness = boundedness
-        self.bounds = bounds
+        self.bounds = bounds[:]
         self.term_limit = term_limit
         self.term_lower_bound = term_lower_bound
         self.step_len = step_len
@@ -123,7 +124,7 @@ class metalog():
 
         # Construct the Y Matrix initial values
         Y = pd.DataFrame()
-        Y['y1'] = np.repeat([1], len(df_x['x']))
+        Y['y1'] = np.ones(len(df_x['x']))
         Y['y2'] = np.log(df_x['probs'] / (1 - df_x['probs']))
         Y['y3'] = (df_x['probs'] - 0.5) * Y['y2']
 
@@ -146,10 +147,10 @@ class metalog():
 
         self.output_dict = a_vector_OLS_and_LP(
             output_dict,
-            term_limit = self.term_limit,
-            term_lower_bound = self.term_lower_bound,
             bounds = self.bounds,
             boundedness = self.boundedness,
+            term_limit = self.term_limit,
+            term_lower_bound = self.term_lower_bound,
             fit_method = self.fit_method,
             diff_error = .001,
             diff_step = 0.001)
@@ -279,6 +280,7 @@ class metalog():
                 raise ValueError('Input probabilities must have values between, not including, 0 and 1')
             if len(ps) != len(self.x):
                 raise IndexError('probs vector and x vector must be the same length')
+            ps = ps.copy()
         self._probs = ps
 
     @property
@@ -323,7 +325,7 @@ class metalog():
             - 'b': output_dict['dataValues']['z'] = log( (x-lower_bound) / (upper_bound-x) )
 
         Returns:
-            df_x: (:obj:`pandas.DataFrame` with columns [`x`,`z`] of type numeric): DataFrame that is used as input to `a_vector_OLS_and_LP` method.
+            df_x: (:obj:`pandas.DataFrame` with columns ['x','probs','z'] of type numeric): DataFrame that is used as input to `a_vector_OLS_and_LP` method.
 
         """
 
@@ -342,7 +344,6 @@ class metalog():
         return self.output_dict
 
     def __getitem__(self, arr):
-        #TODO input validation that arr in output dict
         if arr not in self.output_dict:
             raise KeyError()
         return self.output_dict[arr]

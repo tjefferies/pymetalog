@@ -6,23 +6,111 @@ from .pdf_quantile_functions import pdf_quantile_builder
 from .support import diffMatMetalog, pdfMetalog, quantileMetalog, newtons_method_metalog
 
 import time
-
 import warnings
 
 def a_vector_OLS_and_LP(m_dict,
-           term_limit,
-           term_lower_bound,
            bounds,
            boundedness,
+           term_limit,
+           term_lower_bound,
            fit_method,
            diff_error = .001,
            diff_step = 0.001):
 
-    """TODO: write docstring
+    """ Main workhorse function of pymetalog package.
+        Called during metalog.__init__ method call.
+
+    Args:
+        m_dict (:obj:`dict` with keys ['params', 'dataValues', 'Y']): Initialized output_dict variable from metalog class.
+            - m_dict['params']: (:obj:`dict` with keys ['bounds', 'boundedness', 'term_limit', 'term_lower_bound', 'step_len', 'fit_method']):
+                * 'bounds': metalog.bounds
+                * 'boundedness': metalog.boundedness
+                * 'term_limit': metalog.term_limit
+                * 'term_lower_bound': metalog.term_lower_bound
+                * 'step_len': metalog.step_len
+                * 'fit_method': metalog.fit_method
+
+            - m_dict['dataValues']: (:obj:`pandas.DataFrame` with columns ['x','probs','z']  of type numeric):
+                * 'x': metalog.x
+                * 'probs': metalog.probs
+                * 'z': column calculated in metalog.append_zvector method
+                    - depends on metalog.boundedness attribute
+                    - metalog.boundedness = 'u':
+                        * 'z' = metalog.x
+                    - metalog.boundedness = 'sl':
+                        * 'z' = log( (metalog.x-lower_bound) )
+                    - metalog.boundedness = 'su':
+                        * 'z' = = log( (upper_bound-metalog.x) )
+                    - metalog.boundedness = 'b':
+                        * 'z' = log( (metalog.x-lower_bound) / (upper_bound-metalog.x) )
+
+            - m_dict['Y']: (:obj:`pandas.DataFrame` with columns ['y1','y2','y3','y4', ... ,'yn']  of type numeric):
+                * 'y1': numpy.array of ones with length equal to len(x)
+                * 'y2': numpy.array of numeric values equal to the term attached to s in the logistic quantile function np.log(m_dict['dataValues']['probs'] / (1 - m_dict['dataValues']['probs']))
+                * 'y3': numpy.array of numeric values (m_dict['dataValues']['probs'] - 0.5) * m_dict['Y']['y2']
+                * 'y4': numpy.array of numeric values m_dict['Y']['y4'] = m_dict['dataValues']['probs'] - 0.5
+                * 'yn': numpy.array of numeric values:
+                    - if n in 'yn' is odd,
+                        m_dict['Y']['yn'] = m_dict['Y']['y4']**(int(i//2))
+                    - if n in 'yn' is even,
+                        zn = 'y' + str(n-1)
+                        m_dict['Y'][yn] = m_dict['Y']['y2'] * m_dict['Y'][zn]
+
+        bounds (:obj:`list`): Upper and lower limits to filter the data with before calculating metalog quantiles/pdfs.
+            - should be set in conjunction with the `boundedness` parameter
+
+        boundedness (:obj:`str`): String that is used to specify the type of metalog to fit.
+            - must be in set ('u','sl','su','b')
+            - Default: 'u'
+                * Fits an unbounded metalog
+            - 'sl' fits a strictly lower bounded metalog
+                * len(bounds) must == 1
+            - 'su' fits a strictly upper bounded metalog
+                * len(bounds) must == 1
+            - 'b' fits a upper/lower bounded metalog
+                * len(bounds) must == 2
+                * bounds[1] must be > bounds[0]
+
+        term_limit (:obj:`int`): The upper limit of the range of metalog terms to use to fit the data.
+            - strictly > term_lower_bound
+            - in range [3,30]
+
+        term_lower_bound (:obj:`int`): The lower limit of the range of metalog terms to use to fit the data.
+            - strictly < term_limit
+            - in range [2,29]
+
+        fit_method (:obj:`str`): Fit method to use to fit metalog distribution.
+            - must be in set ('any','OLS','LP','MLE')
+            - Default: 'any'
+                * first tries 'OLS' method than 'LP'
+            - 'OLS' only tries to fit by solving directly for a coefficients using ordinary least squares method
+            - 'LP' only tries to estimate fit using simplex linear program optimization routine
+            - 'MLE' first tries 'OLS' method than falls back to a maximum likelihood estimation routine
+
+        diff_error (:obj:`float`, optional): Value used to in scipy.optimize.linprog method call
+                                             to init the array of values representing the
+                                             upper-bound of each inequality constraint (row) in A_ub.
+            - #TODO: Insert maths
+
+        diff_step (:obj:`float`, optional): Value passed to `step_len` parameter in support.py diffMatMetalog method call
+                                             defines the bin width for the Reimann sum of the differences differentiation method
+            - diffMatMetalog differentiates the metalog pdf
+                * Differentiation reference: https://math.stackexchange.com/a/313135
+    Returns:
+        m_dict: (:obj:`dict` with keys ['params', 'dataValues', 'Y', 'A', 'M', 'Validation'])
+            - m_dict['A']: (:obj:`pandas.DataFrame` with columns ['a2','a3', ... ,'an'] of type numeric):
+                * a2, a3, ... , an are our a coefficients returned by the method specified in `fit_method`
+
+            - m_dict['M']: (:obj:`pandas.DataFrame` with columns #TODO)
+                * #TODO
+
+            - m_dict['Validation']: (:obj:`pandas.DataFrame` with columns ['term', 'valid', 'method'] of type str):
+                * 'term': each metalog estimation given a number of terms
+                * 'valid': boolean flag indicating if the metalog estimation was valid or not
+                * 'method': a string indicating which method was used for the metalog estimation
 
     """
 
-    # Some place holder values
     A = pd.DataFrame()
     c_a_names = []
     c_m_names = []
@@ -57,11 +145,11 @@ def a_vector_OLS_and_LP(m_dict,
                 temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
 
 
-        temp = np.append(temp, np.repeat(0,(term_limit-i)))
+        temp = np.append(temp, np.zeros(term_limit-i))
 
         if fit_method == 'MLE':
             temp = a_vector_MLE(temp, y, i, m_dict, bounds, boundedness)
-            tempList = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
+            temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
         # build a y vector for smaller data sets
         if len(z) < 100:
@@ -72,26 +160,24 @@ def a_vector_OLS_and_LP(m_dict,
             y = np.hstack((y1, y2, y3))
 
         # Get the list and quantile values back for validation
-        tempList = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
+        temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
         # If it not a valid pdf run and the OLS version was used the LP version
-        if (tempList['valid'] == 'no') and (fit_method != 'OLS'):
+        if (temp_dict['valid'] == 'no') and (fit_method != 'OLS'):
             temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
-            temp = np.append(temp, np.repeat(0, (term_limit - i)))
+            temp = np.append(temp, np.zeros(term_limit-i))
             methodFit = 'Linear Program'
 
             # Get the list and quantile values back for validation
-            tempList = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
-
-
+            temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
         if len(Mh) != 0:
-            Mh = pd.concat([Mh, pd.DataFrame(tempList['m'])], axis=1)
-            Mh = pd.concat([Mh, pd.DataFrame(tempList['M'])], axis=1)
+            Mh = pd.concat([Mh, pd.DataFrame(temp_dict['m'])], axis=1)
+            Mh = pd.concat([Mh, pd.DataFrame(temp_dict['M'])], axis=1)
 
         if len(Mh) == 0:
-            Mh = pd.DataFrame(tempList['m'])
-            Mh = pd.concat([Mh, pd.DataFrame(tempList['M'])], axis=1)
+            Mh = pd.DataFrame(temp_dict['m'])
+            Mh = pd.concat([Mh, pd.DataFrame(temp_dict['M'])], axis=1)
 
         if len(A) != 0:
             A = pd.concat([A, pd.DataFrame(temp)], axis=1)
@@ -99,20 +185,16 @@ def a_vector_OLS_and_LP(m_dict,
         if len(A) == 0:
             A = pd.DataFrame(temp)
 
-        tempValidation = pd.DataFrame(data={'term': [i], 'valid': [tempList['valid']], 'method': [methodFit]})
+        tempValidation = pd.DataFrame(data={'term': [i], 'valid': [temp_dict['valid']], 'method': [methodFit]})
         Validation = pd.concat([Validation, tempValidation], axis=0)
-
-
 
     A.columns = c_a_names
     Mh.columns = c_m_names
 
     m_dict['A'] = A
     m_dict['M'] = Mh
-    m_dict['M']['y'] = tempList['y']
+    m_dict['M']['y'] = temp_dict['y']
     m_dict['Validation'] = Validation
-
-
 
     return m_dict
 
@@ -142,9 +224,9 @@ def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_st
         error_mat = np.array([])
 
         for j in range(1,len(Y.iloc[:,0])+1):
-            front_zeros = np.repeat(0, (2 * (j - 1)))
+            front_zeros = np.zeros(2 * (j - 1))
             ones = [1, -1]
-            trail_zeroes = np.repeat(0, (2 * (len(Y.iloc[:, 1]) - j)))
+            trail_zeroes = np.zeros(2 * (len(Y.iloc[:, 1]) - j))
             if j == 1:
                 error_vars = np.append(ones, trail_zeroes)
 
@@ -162,7 +244,7 @@ def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_st
         diff_zeros = []
 
         for t in range(0,len(diff_mat.iloc[:, 0])):
-            zeros_temp = np.repeat(0, (2 * len(Y.iloc[:, 0])))
+            zeros_temp = np.zeros(2 * len(Y.iloc[:, 0]))
 
             if np.size(diff_zeros) == 0:
                 diff_zeros = zeros_temp
@@ -175,7 +257,7 @@ def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_st
         lp_mat = np.concatenate((new, diff_mat), axis=0)
 
         # Objective function coeficients
-        c = np.append(np.repeat(1,(2 * len(Y.iloc[:, 1]))), np.repeat(0, (2*i)))
+        c = np.append(np.ones(2 * len(Y.iloc[:, 1])), np.zeros(2*i))
 
         # Constraint matrices
         A_eq = lp_mat[:len(Y.iloc[:, 1]),:]

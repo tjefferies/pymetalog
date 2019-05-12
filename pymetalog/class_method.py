@@ -23,6 +23,9 @@ def summary(m):
   print(m.output_dict['Validation'].to_string(index=False))
 
 def rmetalog(m, n = 1, term = 2, generator = 'rand'):
+  """TODO: write docstring
+
+  """
   m = m.output_dict
   valid_terms = np.asarray(m['Validation']['term'])
   valid_terms_printout = " ".join(str(t) for t in valid_terms)
