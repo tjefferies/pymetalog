@@ -3,12 +3,28 @@ import numpy as np
 
 
 def MLprobs(x_old, step_len):
-  """TODO: write docstring
+  """ Returns the quantile values x['x'] and corresponding bins x['y'].
+      Called during metalog.__init__ method call.
+
+      Args:
+      x_old (:obj:`list` | `numpy.ndarray` | `pandas.Series`): Input data to fit the metalog distribution to.
+        - must be an array of allowable types: int, float, numpy.int64, numpy.float64
+
+      step_len (:obj:`float`): Used to specify the bin width used to estimate the metalog.
+
+      Returns:
+        x: (:obj:`dict` with keys ['x','probs']  of type float):
+          - x['x']: (:obj:`numpy.ndarray` of type float):
+              * x['x'] is the quantile values found using the bin widths array x['y] - which is specified using the `step_len` parameter
+
+          - x['y']: (:obj:`numpy.ndarray` of type float):
+              * x['y'] is the array of bin widths specified for x['x']
 
   """
+
   l = len(x_old)
   x = pd.DataFrame()
-  x['x'] = x_old
+  x['x'] = x_old.copy()
 
   x.sort_values(by='x')
 
