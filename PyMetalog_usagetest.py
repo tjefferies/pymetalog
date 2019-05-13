@@ -6,7 +6,7 @@ import pymetalog as pm
 fish_data = np.loadtxt('fishout.csv', delimiter=',', skiprows=1, dtype='str')[:,1].astype(np.float)
 
 # metalog creation
-fish_metalog = pm.metalog(x=fish_data, bounds=[0,60], boundedness='b', term_limit=9, term_lower_bound=2, step_len=.01,)
+fish_metalog = pm.metalog(x=fish_data, bounds=[0,40], boundedness='b', term_limit=9, term_lower_bound=2, step_len=.001,)
 
 # summary function
 pm.summary(fish_metalog)
@@ -16,7 +16,7 @@ pm.plot(fish_metalog)
 plt.show()
 
 # metalog random sampling
-r_gens = pm.rmetalog(fish_metalog, n = 1000, term = 9)
+r_gens = pm.rmetalog(fish_metalog, n = 1000, term = 9, generator='hdr')
 plt.hist(r_gens,14)
 plt.show()
 

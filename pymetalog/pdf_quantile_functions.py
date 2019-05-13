@@ -2,7 +2,10 @@ import numpy as np
 from .support import pdfMetalog, quantileMetalog
 
 def pdf_quantile_builder(temp, y, term_limit, bounds, boundedness):
-    q_list = {}
+    """TODO: write docstring
+
+    """
+    q_dict = {}
 
     # build pdf
     m = pdfMetalog(temp, y[0], term_limit, bounds = bounds, boundedness = boundedness)
@@ -44,15 +47,18 @@ def pdf_quantile_builder(temp, y, term_limit, bounds, boundedness):
         y = np.append(0, y)
         y = np.append(y, 1)
 
-    q_list['m'] = m
-    q_list['M'] = M
-    q_list['y'] = y
+    q_dict['m'] = m
+    q_dict['M'] = M
+    q_dict['y'] = y
 
     # PDF validation
-    q_list['valid'] = pdfMetalogValidation(q_list['m'])
-    return q_list
+    q_dict['valid'] = pdfMetalogValidation(q_dict['m'])
+    return q_dict
 
 def pdfMetalogValidation(x):
+    """TODO: write docstring
+
+    """
     y = np.min(x)
     if (y >= 0):
         return('yes')

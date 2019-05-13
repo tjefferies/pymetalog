@@ -5,22 +5,28 @@ import seaborn as sns
 from .support import newtons_method_metalog, pdfMetalog_density
 
 def summary(m):
+  """TODO: write docstring
+
+  """
   print(' -----------------------------------------------\n',
       'Summary of Metalog Distribution Object\n',
       '-----------------------------------------------\n',
       '\nParameters\n',
-      'Term Limit: ', m.output_list['params']['term_limit'], '\n',
-      'Term Lower Bound: ', m.output_list['params']['term_lower_bound'], '\n',
-      'Boundedness: ', m.output_list['params']['boundedness'], '\n',
-      'Bounds (only used based on boundedness): ', m.output_list['params']['bounds'], '\n',
-      'Step Length for Distribution Summary: ', m.output_list['params']['step_len'], '\n',
-      'Method Use for Fitting: ', m.output_list['params']['fit_method'], '\n',
+      'Term Limit: ', m.output_dict['params']['term_limit'], '\n',
+      'Term Lower Bound: ', m.output_dict['params']['term_lower_bound'], '\n',
+      'Boundedness: ', m.output_dict['params']['boundedness'], '\n',
+      'Bounds (only used based on boundedness): ', m.output_dict['params']['bounds'], '\n',
+      'Step Length for Distribution Summary: ', m.output_dict['params']['step_len'], '\n',
+      'Method Use for Fitting: ', m.output_dict['params']['fit_method'], '\n',
       '\n\n Validation and Fit Method'
   )
-  print(m.output_list['Validation'].to_string(index=False))
+  print(m.output_dict['Validation'].to_string(index=False))
 
 def rmetalog(m, n = 1, term = 2, generator = 'rand'):
-  m = m.output_list
+  """TODO: write docstring
+
+  """
+  m = m.output_dict
   valid_terms = np.asarray(m['Validation']['term'])
   valid_terms_printout = " ".join(str(t) for t in valid_terms)
 
@@ -81,7 +87,10 @@ def rmetalog(m, n = 1, term = 2, generator = 'rand'):
   return(s)
 
 def dmetalog(m, q, term = 3):
-  valid_terms = np.asarray(m.output_list['Validation']['term'])
+  """TODO: write docstring
+
+  """
+  valid_terms = np.asarray(m.output_dict['Validation']['term'])
 
   if (term not in valid_terms) or type(term) != int:
     raise TypeError('Error: term must be a single positive numeric interger contained in the metalog object. Available '
@@ -94,7 +103,10 @@ def dmetalog(m, q, term = 3):
 
 
 def pmetalog(m, q, term = 3):
-  valid_terms = np.asarray(m.output_list['Validation']['term'])
+  """TODO: write docstring
+
+  """
+  valid_terms = np.asarray(m.output_dict['Validation']['term'])
 
   if type(q) != list:
     raise TypeError('Error: q must be a list of numeric values')
@@ -110,7 +122,10 @@ def pmetalog(m, q, term = 3):
 
 
 def qmetalog(m, y, term = 3):
-  m = m.output_list
+  """TODO: write docstring
+
+  """
+  m = m.output_dict
   valid_terms = np.asarray(m['Validation']['term'])
   valid_terms_printout = " ".join(str(t) for t in valid_terms)
 
@@ -161,7 +176,10 @@ def qmetalog(m, y, term = 3):
 
 
 def plot(x):
-  x = x.output_list
+  """TODO: write docstring
+
+  """
+  x = x.output_dict
   # build plots
   InitalResults = pd.DataFrame(data={
     'term':(np.repeat((str(x['params']['term_lower_bound'])+' Terms'), len(x['M'].iloc[:,0]))),
