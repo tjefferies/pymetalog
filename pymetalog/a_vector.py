@@ -116,6 +116,9 @@ def a_vector_OLS_and_LP(m_dict,
     c_m_names = []
     Mh = pd.DataFrame()
     Validation = pd.DataFrame()
+    df_MH_temp_list = list()
+    df_A_temp_list = list()
+    df_Validation_temp_list = list()
 
     # TODO: Large for-loop can probably be factored into smaller functions
     for i in range(term_lower_bound,term_limit+1):
@@ -144,12 +147,11 @@ def a_vector_OLS_and_LP(m_dict,
         if fit_method == "LP":
                 temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
 
-
         temp = np.append(temp, np.zeros(term_limit-i))
 
         if fit_method == 'MLE':
             temp = a_vector_MLE(temp, y, i, m_dict, bounds, boundedness)
-            temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
+            temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness) # TODO: TAJ 05/18/2019 Recommend deleting - it has no effect since line 162 below executes either way and overwrites the `temp_dict` variable.
 
         # build a y vector for smaller data sets
         if len(z) < 100:
@@ -171,23 +173,17 @@ def a_vector_OLS_and_LP(m_dict,
             # Get the dict and quantile values back for validation
             temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
 
-        if len(Mh) != 0:
-            Mh = pd.concat([Mh, pd.DataFrame(temp_dict['m'])], axis=1)
-            Mh = pd.concat([Mh, pd.DataFrame(temp_dict['M'])], axis=1)
-
-        if len(Mh) == 0:
-            Mh = pd.DataFrame(temp_dict['m'])
-            Mh = pd.concat([Mh, pd.DataFrame(temp_dict['M'])], axis=1)
-
-        if len(A) != 0:
-            A = pd.concat([A, pd.DataFrame(temp)], axis=1)
-
-        if len(A) == 0:
-            A = pd.DataFrame(temp)
+        df_MH_temp_list.append(pd.DataFrame(temp_dict['m']))
+        df_MH_temp_list.append(pd.DataFrame(temp_dict['M']))
+        df_A_temp_list.append(pd.DataFrame(temp))
 
         tempValidation = pd.DataFrame(data={'term': [i], 'valid': [temp_dict['valid']], 'method': [methodFit]})
-        Validation = pd.concat([Validation, tempValidation], axis=0)
+        df_Validation_temp_list.append(tempValidation)
 
+    Validation = pd.concat(df_Validation_temp_list, axis=0)
+    Mh = pd.concat(df_MH_temp_list, axis=1)
+    A = pd.concat(df_A_temp_list, axis=1)
+    
     A.columns = c_a_names
     Mh.columns = c_m_names
 

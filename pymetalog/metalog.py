@@ -4,7 +4,88 @@ from .support import MLprobs
 from .a_vector import a_vector_OLS_and_LP
 
 
-class metalog():
+class metalog(object):
+    """
+    Main class in pymetalog package.
+    The pymetalog package is a python implementation of Tom Keelin's metalog distributions.
+
+    The metalog distributions are a family of continuous univariate
+    probability distributions that are convenient derivation of equations that appropriately
+    characterize the probability density (PDF), cumulative (CDF) or quantile distribution functions.
+
+    They can be used in most any situation in which CDF data is known and a flexible,
+    simple, and easy-to-use continuous probability distribution is needed to
+    represent that data. See links below for more details.
+
+    Uses and benefits: http://www.metalogdistributions.com/usesbenefits.html
+    Applications: http://www.metalogdistributions.com/applicationsdata.html
+
+    Theory: http://pubsonline.informs.org/doi/abs/10.1287/deca.2016.0338
+    Homepage: http://www.metalogdistributions.com/
+
+    Attributes:
+        x (:obj: `numpy.ndarray`): Input array to fit the metalog distribution to.
+        boundedness (:obj: `str`): String type of metalog to fit ('u' | 'sl' | 'su' | 'b').
+        bounds (:obj: `list`): List upper and lower limits to filter array with before calculating metalog quantiles/pdfs.
+        term_limit (:obj: `int`): Int upper limit of the range of metalog terms to use to fit the data.
+        term_lower_bound (:obj: `int`): Int lower limit of the range of metalog terms to use to fit the data.
+        step_len (:obj: `float`): Float bin width used to estimate the metalog fit.
+        probs (:obj: `numpy.ndarray`): Input array of probabilities associated with the data values in `x`.
+        fit_method (:obj: `str`): String type of metalog fit method ('any' | 'OLS' | 'LP' | 'MLE').
+
+        output_dict (:obj:`dict` with keys ['params', 'dataValues', 'Y', 'A', 'M', 'Validation']).
+            * output_dict['params'] (:obj:`dict`):
+                - output_dict['params']['bounds'] = `bounds`
+                - output_dict['params']['boundedness'] = `boundedness`
+                - output_dict['params']['term_limit'] = `term_limit`
+                - output_dict['params']['term_lower_bound'] = `term_lower_bound`
+                - output_dict['params']['step_len'] = `step_len`
+                - output_dict['params']['fit_method'] = `fit_method`
+
+            * output_dict['dataValues'] (:obj:`dict`).
+                - output_dict['dataValues']['x']: `x`
+                - output_dict['dataValues']['probs']: `probs`
+                - output_dict['dataValues']['z']: column calculated in `append_zvector` method
+                    * depends on `boundedness` attribute
+                    * `boundedness` = 'u':
+                        * output_dict['dataValues']['z'] = `x`
+                    * `boundedness` = 'sl':
+                        * output_dict['dataValues']['z'] = log( (`x`-lower_bound) )
+                    * `boundedness` = 'su':
+                        * output_dict['dataValues']['z'] = = log( (upper_bound-`x`) )
+                    * `boundedness` = 'b':
+                        * output_dict['dataValues']['z'] = log( (`x`-lower_bound) / (upper_bound-`x`) )
+
+            * output_dict['Y'] (:obj:`pandas.DataFrame` with columns ['y1','y2','y3','y4', ... ,'yn']  of type numeric).
+                - output_dict['Y']['y1']: numpy.array of ones with length equal to len(`x`)
+                - output_dict['Y']['y2']: numpy.array of numeric values equal to the term attached to s in the logistic quantile function np.log(output_dict['dataValues']['probs'] / (1 - output_dict['dataValues']['probs']))
+                - output_dict['Y']['y3']: numpy.array of numeric values (output_dict['dataValues']['probs'] - 0.5) * output_dict['Y']['y2']
+                - output_dict['Y']['y4']: numpy.array of numeric values output_dict['Y']['y4'] = output_dict['dataValues']['probs'] - 0.5
+                - output_dict['Y']['yn']: numpy.array of numeric values:
+                    * if n in 'yn' is odd,
+                        output_dict['Y']['yn'] = output_dict['Y']['y4']**(int(i//2))
+                    * if n in 'yn' is even,
+                        zn = 'y' + str(n-1)
+                        output_dict['Y'][yn] = output_dict['Y']['y2'] * output_dict['Y'][zn]
+
+            - output_dict['A']: (:obj:`pandas.DataFrame` with columns ['a2','a3', ... ,'an'] of type numeric):
+                * 'a2', 'a3', ... , 'an' are our a coefficients returned by the method specified in `fit_method`
+
+            - output_dict['M']: (:obj:`pandas.DataFrame` with columns ['m2', 'M2', 'm3', 'M3', ... , 'mn', 'Mn'] of type numeric):
+                * 'm2', 'M2', 'm3', 'M3', ... , 'mn', 'Mn' are the metalog pdf/quantile fit estimates returned by the method specified in `fit_method`
+                * 'mn' is the pdf fit of metalog term n
+                * 'Mn' is the quantile fit of metalog term n
+
+            - output_dict['Validation']: (:obj:`pandas.DataFrame` with columns ['term', 'valid', 'method']):
+                * 'term' (:obj: `int`): each metalog estimation given a number of terms
+                * 'valid' (:obj: `str`): boolean flag indicating if the metalog estimation was valid or not
+                * 'method' (:obj: `str`): a string indicating which method was used for the metalog estimation
+
+    Methods:
+        get_params(`bounds`, `boundedness`, `term_limit`, `term_lower_bound`, `step_len`, `fit_method`) -> output_dict['params'] (:obj:`dict`)
+        append_zvector(`bounds`, `boundedness`) -> df_x: (:obj:`pandas.DataFrame` with columns ['x','probs','z'] of type numeric)
+        
+    """
     def __init__(self, x, bounds=[0,1], boundedness='u', term_limit=13, term_lower_bound=2, step_len=.01, probs=None, fit_method='any'):
         """Fits a metalog distribution using the input array `x`.
 
@@ -41,7 +122,7 @@ class metalog():
 
             probs (:obj:`list` | `numpy.ndarray`, optional): Probabilities associated with the data values in x.
                 - must be an array of integer or float data
-                - must be in range [0,1]
+                - all elements must be in range [0,1]
 
             fit_method (:obj:`str`, optional): Fit method to use to fit metalog distribution.
                 - must be in set ('any','OLS','LP','MLE')
@@ -317,7 +398,7 @@ class metalog():
     def append_zvector(self, df_x):
         """Sets the `dataValues` key (pandas.DataFrame) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
             
-            - Uses `boundedness` attribute to set z vector
+        Uses `boundedness` attribute to set z vector
             - 'u': output_dict['dataValues']['z'] = x
                 * Start with all the input data
             - 'sl': output_dict['dataValues']['z'] = log( (x-lower_bound) )
@@ -326,7 +407,9 @@ class metalog():
 
         Returns:
             df_x: (:obj:`pandas.DataFrame` with columns ['x','probs','z'] of type numeric): DataFrame that is used as input to `a_vector_OLS_and_LP` method.
-
+                - df_x['x']: metalog.x
+                - df_x['probs']: metalog.probs
+                - df_x['z']: z vector above
         """
 
         if self.boundedness == 'u':

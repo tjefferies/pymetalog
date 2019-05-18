@@ -17,8 +17,8 @@ def MLprobs(x_old, step_len):
           - x['x']: (:obj:`numpy.ndarray` of type float):
               * x['x'] is the quantile values found using the bin widths array x['y] - which is specified using the `step_len` parameter
 
-          - x['y']: (:obj:`numpy.ndarray` of type float):
-              * x['y'] is the array of bin widths specified for x['x']
+          - x['probs']: (:obj:`numpy.ndarray` of type float):
+              * x['probs'] is the array of bin widths specified for x['x']
 
   """
 
