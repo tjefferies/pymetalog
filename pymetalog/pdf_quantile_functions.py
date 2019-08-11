@@ -8,6 +8,8 @@ def pdf_quantile_builder(temp, y, term_limit, bounds, boundedness):
         temp (:obj: `numpy.ndarray` of type float): Array of a coefficients found by fitting metalog distribution.
             - Fit method is specified by metalog.fit_method attribute
 
+        y (:obj: `numpy.ndarray` of type float): Array of bin widths specified for `a` parameter
+
         term_limit (:obj: `int`): The upper limit of the range of metalog terms to use to fit the data.
             - metalog.term_limit attribute
             - in range [3,30]
