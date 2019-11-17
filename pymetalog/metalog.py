@@ -34,7 +34,7 @@ class metalog(object):
         fit_method (:obj: `str`): String type of metalog fit method ('any' | 'OLS' | 'LP' | 'MLE').
 
         output_dict (:obj:`dict` with keys ['params', 'dataValues', 'Y', 'A', 'M', 'Validation']).
-            * output_dict['params'] (:obj:`dict`):
+            - output_dict['params'] (:obj:`dict`):
                 - output_dict['params']['bounds'] = `bounds`
                 - output_dict['params']['boundedness'] = `boundedness`
                 - output_dict['params']['term_limit'] = `term_limit`
@@ -42,7 +42,7 @@ class metalog(object):
                 - output_dict['params']['step_len'] = `step_len`
                 - output_dict['params']['fit_method'] = `fit_method`
 
-            * output_dict['dataValues'] (:obj:`dict`).
+            - output_dict['dataValues'] (:obj:`dict`).
                 - output_dict['dataValues']['x']: `x`
                 - output_dict['dataValues']['probs']: `probs`
                 - output_dict['dataValues']['z']: column calculated in `append_zvector` method
@@ -56,7 +56,7 @@ class metalog(object):
                     * `boundedness` = 'b':
                         * output_dict['dataValues']['z'] = log( (`x`-lower_bound) / (upper_bound-`x`) )
 
-            * output_dict['Y'] (:obj:`pandas.DataFrame` with columns ['y1','y2','y3','y4', ... ,'yn']  of type numeric).
+            - output_dict['Y'] (:obj:`pandas.DataFrame` with columns ['y1','y2','y3','y4', ... ,'yn']  of type numeric).
                 - output_dict['Y']['y1']: numpy.array of ones with length equal to len(`x`)
                 - output_dict['Y']['y2']: numpy.array of numeric values equal to the term attached to s in the logistic quantile function np.log(output_dict['dataValues']['probs'] / (1 - output_dict['dataValues']['probs']))
                 - output_dict['Y']['y3']: numpy.array of numeric values (output_dict['dataValues']['probs'] - 0.5) * output_dict['Y']['y2']
