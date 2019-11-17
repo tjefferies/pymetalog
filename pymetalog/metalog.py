@@ -5,7 +5,7 @@ from .a_vector import a_vector_OLS_and_LP
 
 
 class metalog():
-    def __init__(self, x, bounds=[0,1], boundedness='u', term_limit=13, term_lower_bound=2, step_len=.01, probs=None, fit_method='any'):
+    def __init__(self, x, bounds=[0,1], boundedness='u', term_limit=13, term_lower_bound=2, step_len=.01, probs=None, fit_method='any', regularization=0.):
         """Fits a metalog distribution using the input array `x`.
 
         Args:
@@ -51,6 +51,10 @@ class metalog():
                 - 'LP' only tries to estimate fit using simplex linear program optimization routine
                 - 'MLE' first tries 'OLS' method than falls back to a maximum likelihood estimation routine
 
+            regularization (:obj:`float`, optional): L2 regularization term to add to OLS fit
+                - strictly >= 0.
+                - Default: 0. (no regularization, OLS)
+
         Raises:
             TypeError: 'Input x must be an array or pandas Series'
             TypeError: 'Input x must be an array of allowable types: int, float, numpy.int64, or numpy.float64'
@@ -78,6 +82,7 @@ class metalog():
             ValueError: 'Input probabilities cannot contain nans'
             ValueError: 'Input probabilities must have values between, not including, 0 and 1'
             ValueError: 'fit_method can only be values OLS, LP, any, or MLE'
+            ValueError: 'regularization must only be a float >= 0.'
 
         Example:
 
@@ -105,6 +110,7 @@ class metalog():
         self.step_len = step_len
         self.probs = probs
         self.fit_method = fit_method
+        self.regularization = regularization
 
         if probs == None:
             df_x = MLprobs(self.x, step_len=step_len)
@@ -152,6 +158,7 @@ class metalog():
             term_limit = self.term_limit,
             term_lower_bound = self.term_lower_bound,
             fit_method = self.fit_method,
+            regularization = self.regularization,
             diff_error = .001,
             diff_step = 0.001)
 
@@ -294,6 +301,18 @@ class metalog():
         if fm != 'OLS' and fm != 'LP' and fm != 'any' and fm != 'MLE':
             raise ValueError('fit_method can only be values OLS, LP, any, or MLE')
         self._fit_method = fm
+
+    @property
+    def regularization(self):
+        """regularization (:obj:`float`): L2 regularization term to add to OLS fit"""
+
+        return self._regularization
+
+    @regularization.setter
+    def regularization(self, reg):
+        if reg < 0 or not isinstance(reg,float):
+            raise ValueError('regularization must only be a float >= 0.')
+        self._regularization = reg
 
     def get_params(self):
         """Sets the `params` key (dict) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
