@@ -14,7 +14,7 @@ def a_vector_OLS_and_LP(m_dict,
            term_limit,
            term_lower_bound,
            fit_method,
-           regularization,
+           alpha,
            diff_error = .001,
            diff_step = 0.001):
 
@@ -87,9 +87,10 @@ def a_vector_OLS_and_LP(m_dict,
             - 'OLS' only tries to fit by solving directly for a coefficients using ordinary least squares method
             - 'LP' only tries to estimate fit using simplex linear program optimization routine
             - 'MLE' first tries 'OLS' method than falls back to a maximum likelihood estimation routine
-		
-		regularization (:obj:`float`): L2 regularization term to add to OLS fit
+
+        alpha (:obj:`float`, optional): Regularization term to add to OLS fit
             - strictly >= 0.
+            - should be set in conjunction with `penalty` parameter
             - Default: 0. (no regularization, OLS)
 
         diff_error (:obj:`float`, optional): Value used to in scipy.optimize.linprog method call
@@ -138,13 +139,13 @@ def a_vector_OLS_and_LP(m_dict,
 
         if fit_method == 'any' or fit_method == 'MLE':
             try:
-                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + regularization*eye), Y.T), z)
+                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
             except:
                 temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
                 # use LP solver if OLS breaks
         if fit_method == 'OLS':
             try:
-                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + regularization*eye), Y.T), z)
+                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
             except:
                 raise RuntimeError("OLS was unable to solve infeasible or poorly formulated problem")
         if fit_method == "LP":
