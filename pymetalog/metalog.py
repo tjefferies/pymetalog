@@ -203,6 +203,10 @@ class metalog():
         self.probs = probs
         self.fit_method = fit_method
         self.penalty = penalty
+
+        if penalty == None:
+            alpha = 0.
+
         self.alpha = alpha
 
         if probs == None:
@@ -399,7 +403,7 @@ class metalog():
     def penalty(self):
         """penalty (:obj:`str`, optional): Used to specify the norm used in the regularization."""
 
-        return self.penalty
+        return self._penalty
 
     @fit_method.setter
     def penalty(self, p):
@@ -417,10 +421,7 @@ class metalog():
     def alpha(self, a):
         if a < 0 or not isinstance(a,float):
             raise ValueError('alpha must only be a float >= 0.')
-        if not self.penalty:
-            self._alpha = 0.
-        else:
-            self._alpha = a
+        self._alpha = a
 
     def get_params(self):
         """Sets the `params` key (dict) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
