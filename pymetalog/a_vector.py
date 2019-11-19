@@ -14,6 +14,7 @@ def a_vector_OLS_and_LP(m_dict,
            term_limit,
            term_lower_bound,
            fit_method,
+           alpha,
            diff_error = .001,
            diff_step = 0.001):
 
@@ -87,6 +88,11 @@ def a_vector_OLS_and_LP(m_dict,
             - 'LP' only tries to estimate fit using simplex linear program optimization routine
             - 'MLE' first tries 'OLS' method than falls back to a maximum likelihood estimation routine
 
+        alpha (:obj:`float`, optional): Regularization term to add to OLS fit
+            - strictly >= 0.
+            - should be set in conjunction with `penalty` parameter
+            - Default: 0. (no regularization, OLS)
+
         diff_error (:obj:`float`, optional): Value used to in scipy.optimize.linprog method call
                                              to init the array of values representing the
                                              upper-bound of each inequality constraint (row) in A_ub.
@@ -120,6 +126,7 @@ def a_vector_OLS_and_LP(m_dict,
     # TODO: Large for-loop can probably be factored into smaller functions
     for i in range(term_lower_bound,term_limit+1):
         Y = m_dict['Y'].iloc[:,0:i]
+        eye = np.eye(Y.shape[1])
         z = m_dict['dataValues']['z']
         y = m_dict['dataValues']['probs']
         step_len = m_dict['params']['step_len']
@@ -132,13 +139,13 @@ def a_vector_OLS_and_LP(m_dict,
 
         if fit_method == 'any' or fit_method == 'MLE':
             try:
-                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y)), Y.T), z)
+                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
             except:
                 temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
                 # use LP solver if OLS breaks
         if fit_method == 'OLS':
             try:
-                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y)), Y.T), z)
+                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
             except:
                 raise RuntimeError("OLS was unable to solve infeasible or poorly formulated problem")
         if fit_method == "LP":
