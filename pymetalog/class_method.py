@@ -5,7 +5,18 @@ import seaborn as sns
 from .support import newtons_method_metalog, pdfMetalog_density
 
 def summary(m):
-  """TODO: write docstring
+  """ Prints information about the fitted metalog m.
+      Prints to console:
+        - metalog.output_dict['params']['term_limit']
+        - metalog.output_dict['params']['term_lower_bound']
+        - metalog.output_dict['params']['boundedness']
+        - metalog.output_dict['params']['bounds']
+        - metalog.output_dict['params']['step_len']
+        - metalog.output_dict['params']['fit_method']
+        - metalog.output_dict['Validation']
+
+  Args:
+      m (:obj:`metalog`): A fitted metalog object.
 
   """
   print(' -----------------------------------------------\n',
@@ -23,7 +34,29 @@ def summary(m):
   print(m.output_dict['Validation'].to_string(index=False))
 
 def rmetalog(m, n = 1, term = 2, generator = 'rand'):
-  """TODO: write docstring
+  """ Take n random draws from fitted metalog m using specified number of terms.
+      Uses specified random seed.
+
+  Args:
+      m (:obj:`metalog`): A fitted metalog object.
+
+      n (:obj:`int`, optional): Number of random draws to take from fitted metalog.
+        - strictly >= 1
+        - Default: 1
+
+      term (:obj:`int`, optional): Number of metalog terms to use when making random draws.
+        - strictly >= 2
+        - must be in range [m.term_lower_bound, m.term_limit]
+        - Default: 2
+
+      generator (:obj:`str`, optional): String that is used to specify the random number generator.
+        - must be in set ('rand','hdr')
+          * 'rand' uses `np.random.rand`, results are random each time
+          * 'hdr' uses Hubbard Decision Research (HDR) random number generator, results are repeatable
+        - Default: 'rand'
+
+  Returns:
+      (:obj:`numpy.ndarray`): n length numpy array of random draws from fitted metalog.
 
   """
   m = m.output_dict
@@ -87,12 +120,30 @@ def rmetalog(m, n = 1, term = 2, generator = 'rand'):
   return(s)
 
 def dmetalog(m, q, term = 3):
-  """TODO: write docstring
+  """ Generate density values with user specified quantiles from a fitted metalog object.
+      Generated using user specified number of terms.
+      Quantiles are generated using a Newton's Method approximation.
+
+  Args:
+      m (:obj:`metalog`): A fitted metalog object.
+
+      q (:obj:`list` | `numpy.ndarray`): Quantiles to return density values for.
+
+      term (:obj:`int`, optional): Number of metalog terms to use when generating densities.
+        - strictly >= 2
+        - must be in range [m.term_lower_bound, m.term_limit]
+        - Default: 3
+
+  Returns:
+      (:obj:`list`): len(q) list of density values from fitted metalog.
 
   """
   valid_terms = np.asarray(m.output_dict['Validation']['term'])
 
-  if (term not in valid_terms) or type(term) != int:
+  if (type(q) != list) and (type(q) != np.ndarray):
+    raise TypeError('Error: input q must be a list or numpy array.')
+
+  if (term not in valid_terms) or type(term) != int or (term < 2) or ((term % 1) != 0):
     raise TypeError('Error: term must be a single positive numeric interger contained in the metalog object. Available '
                     'terms are: '+' '.join(map(str, valid_terms)))
 
@@ -103,16 +154,31 @@ def dmetalog(m, q, term = 3):
 
 
 def pmetalog(m, q, term = 3):
-  """TODO: write docstring
+  """ Generate probabilities with user specified quantiles from a fitted metalog object.
+      Generated using user specified number of terms.
+      Quantiles are generated using a Newton's Method approximation.
+
+  Args:
+      m (:obj:`metalog`): A fitted metalog object.
+
+      q (:obj:`list` | `numpy.ndarray`): Quantiles to return probabilities values for.
+
+      term (:obj:`int`, optional): Number of metalog terms to use when generating probabilities.
+        - strictly >= 2
+        - must be in range [m.term_lower_bound, m.term_limit]
+        - Default: 3
+
+  Returns:
+      (:obj:`list`): len(q) list of probabilities from fitted metalog.
 
   """
   valid_terms = np.asarray(m.output_dict['Validation']['term'])
 
-  if type(q) != list:
-    raise TypeError('Error: q must be a list of numeric values')
+  if (type(q) != list) and (type(q) != np.ndarray):
+    raise TypeError('Error: input q must be a list or numpy array')
   if not isinstance(q, (int, float, complex)) and not all(isinstance(x, (int, float, complex)) for x in q):
     raise TypeError('Error: all elements in q must be numeric')
-  if (term in valid_terms) != True or type(term) != int:
+  if (term in valid_terms) != True or type(term) != int or (term < 2) or ((term % 1) != 0):
     raise TypeError('Error: term must be a single positive numeric interger contained in the metalog object. Available '
                     'terms are: '+' '.join(map(str, valid_terms)))
 
@@ -122,7 +188,20 @@ def pmetalog(m, q, term = 3):
 
 
 def qmetalog(m, y, term = 3):
-  """TODO: write docstring
+  """ Generate quantiles with a probability from a fitted metalog object.
+
+  Args:
+      m (:obj:`metalog`): A fitted metalog object.
+
+      y (:obj:`list` | `numpy.ndarray`): Probabilities to return quantile values for.
+
+      term (:obj:`int`, optional): Number of metalog terms to use when generating quantiles.
+        - strictly >= 2
+        - must be in range [m.term_lower_bound, m.term_limit]
+        - Default: 3
+
+  Returns:
+      (:obj:`numpy.ndarray`): len(q) length numpy array of quantiles from fitted metalog.
 
   """
   m = m.output_dict
@@ -176,8 +255,13 @@ def qmetalog(m, y, term = 3):
 
 
 def plot(x):
-  """TODO: write docstring
+  """Plots PDF and Quantile panels for each term of fitted metalog x.
 
+  Args:
+      x (:obj:`metalog`): A fitted metalog object.
+
+  Returns:
+      (:obj:`dict` with keys ['pdf', 'cdf']): PDF and Quantile panel plots.
   """
   x = x.output_dict
   # build plots
@@ -186,8 +270,6 @@ def plot(x):
     'pdfValues':x['M'].iloc[:,0],
     'quantileValues':x['M'].iloc[:,1],
     'cumValue':x['M']['y']})
-
-
 
   if len(x['M'].columns) > 3:
     for i in range(2,((len(x['M'].iloc[0,:]) - 1) // 2 + 1)):
@@ -199,7 +281,6 @@ def plot(x):
       })
 
       InitalResults = InitalResults.append(pd.DataFrame(data=TempResults), ignore_index=True)
-
 
   # PDF plot
   sns.set()
