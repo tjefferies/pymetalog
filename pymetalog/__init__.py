@@ -1,3 +1,3 @@
 from .metalog import metalog
-from .class_method import rmetalog, plot, qmetalog, pmetalog, dmetalog, summary
+from .class_method import rmetalog, plot, qmetalog, pmetalog, dmetalog, summary, update
 name = "pymetalog"
