@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.stats import t
 from .support import MLprobs
 from .a_vector import a_vector_OLS_and_LP
 
@@ -24,7 +25,8 @@ class metalog():
     Homepage: http://www.metalogdistributions.com/
 
     Attributes:
-        x (:obj: `numpy.ndarray`): Input array to fit the metalog distribution to.
+        x (:obj: `numpy.ndarray`): Input array being fit with the metalog distribution.
+        nobs (:obj:`int`): Number of data points in x.
         boundedness (:obj: `str`): String type of metalog to fit ('u' | 'sl' | 'su' | 'b').
         bounds (:obj: `list`): List upper and lower limits to filter array with before calculating metalog quantiles/pdfs.
         term_limit (:obj: `int`): Int upper limit of the range of metalog terms to use to fit the data.
@@ -32,8 +34,9 @@ class metalog():
         step_len (:obj: `float`): Float bin width used to estimate the metalog fit.
         probs (:obj: `numpy.ndarray`): Input array of probabilities associated with the data values in `x`.
         fit_method (:obj: `str`): String type of metalog fit method ('any' | 'OLS' | 'LP' | 'MLE').
-        penalty (:obj:`str`, optional): Used to specify the norm used in the regularization.
-        alpha (:obj:`float`, optional): Regularization term to add to OLS fit.
+        penalty (:obj:`str`): Used to specify the norm used in the regularization.
+        alpha (:obj:`float`): Regularization term to add to OLS fit.
+        save_data (:obj:`bool`, optional): T/F to save copy of input data `x` with metalog object.
 
         output_dict (:obj:`dict` with keys ['params', 'dataValues', 'Y', 'A', 'M', 'Validation']).
             - output_dict['params'] (:obj:`dict`):
@@ -43,6 +46,7 @@ class metalog():
                 - output_dict['params']['term_lower_bound'] = `term_lower_bound`
                 - output_dict['params']['step_len'] = `step_len`
                 - output_dict['params']['fit_method'] = `fit_method`
+                - output_dict['params']['square_residual_error'] = Squared residual error (y_i - yhat_i)^2`                
 
             - output_dict['dataValues'] (:obj:`dict`).
                 - output_dict['dataValues']['x']: `x`
@@ -88,7 +92,7 @@ class metalog():
         append_zvector(`bounds`, `boundedness`) -> df_x: (:obj:`pandas.DataFrame` with columns ['x','probs','z'] of type numeric)
         
     """
-    def __init__(self, x, bounds=[0,1], boundedness='u', term_limit=13, term_lower_bound=2, step_len=.01, probs=None, fit_method='any', penalty=None, alpha=0.):
+    def __init__(self, x, bounds=[0,1], boundedness='u', term_limit=13, term_lower_bound=2, step_len=.01, probs=None, fit_method='any', penalty=None, alpha=0., save_data = False):
         """Fits a metalog distribution using the input array `x`.
 
         Args:
@@ -146,6 +150,12 @@ class metalog():
                 - should be set in conjunction with `penalty` parameter
                 - Default: 0. (no regularization, OLS)
 
+            save_data (:obj:`bool`, optional): Saves copy of input data `x` with metalog object.
+                - strictly boolean (True, False)
+                - saves a copy of data used to fit metalog object
+                    * Used for Bayesian updating
+                - Default: False
+
         Raises:
             TypeError: 'Input x must be an array or pandas Series'
             TypeError: 'Input x must be an array of allowable types: int, float, numpy.int64, or numpy.float64'
@@ -175,6 +185,7 @@ class metalog():
             ValueError: 'fit_method can only be values OLS, LP, any, or MLE'
             ValueError: 'penalty can only be values l2 or None'
             ValueError: 'alpha must only be a float >= 0.'
+            ValueError: 'save_data must only be boolean.'
 
         Example:
 
@@ -203,6 +214,8 @@ class metalog():
         self.probs = probs
         self.fit_method = fit_method
         self.penalty = penalty
+        self.nobs = len(x)
+        self.save_data = save_data
 
         if penalty == None:
             alpha = 0.
@@ -258,6 +271,54 @@ class metalog():
             alpha = self.alpha,
             diff_error = .001,
             diff_step = 0.001)
+
+        # Build the Components for Baysiean Updating
+
+        if self.save_data & self.term_lower_bound <= 3:
+            Y = self.output_dict['Y']
+            gamma = np.dot(self.output_dict['Y'].T, self.output_dict['Y'])
+
+            self.output_dict['params']['bayes'] = {'gamma': gamma}
+            self.output_dict['params']['bayes']['mu'] = self.output_dict['A']
+            
+            v = list()
+            for i in range(term_lower_bound,term_limit+1):
+              v.append(self.output_dict['params']['nobs'] - i)
+            v = np.array(v)
+            a = v/2
+
+            self.output_dict['params']['bayes']['a'] = a
+            self.output_dict['params']['bayes']['v'] = v            
+
+            # for now, just using 3 term standard metalog
+            v = v[1]
+            a = a[1]
+            s = np.array([0.1, 0.5, 0.9])
+            Ys = np.repeat(1., 3)
+
+            Ys = np.column_stack([np.repeat(1, 3), np.log(s / (1 - s)), (s - 0.5)*np.log(s / (1 - s))])
+            three_term_metalog_fit_idx = 'a{}'.format(self.term_limit - 3)
+            q_bar = np.dot(Ys, self.output_dict['A'][three_term_metalog_fit_idx].values[-3:])
+
+            self.output_dict['params']['bayes']['q_bar'] = q_bar
+
+            # estimate b using q_90 assessment
+
+            est = (q_bar[2]-q_bar[1])/2 + q_bar[1]
+            s2 = ((q_bar[2] - q_bar[1]) / t.ppf(0.9,np.array(v)))**2
+
+            gamma = gamma[:3,:3]
+
+            # build covariance matrix for students t
+            sig = Ys.dot(np.linalg.solve(gamma, np.eye(len(gamma)))).dot(Ys.T)
+
+            # b = 0.5 * self.output_dict['params']['square_residual_error'][len(self.output_dict['params']['square_residual_error'])]
+            b = (a * s2) / gamma[1,1]
+            self.output_dict['params']['bayes']['sig'] = (b/a)*sig
+            self.output_dict['params']['bayes']['b'] = b
+
+        else:
+            del self.x
 
 
     # input validation...
@@ -423,6 +484,18 @@ class metalog():
             raise ValueError('alpha must only be a float >= 0.')
         self._alpha = a
 
+    @property
+    def save_data(self):
+        """save_data (:obj:`bool`, optional): Saves copy of input data `x` with metalog object."""
+
+        return self._save_data
+
+    @save_data.setter
+    def save_data(self, sd):
+        if not type(sd) is bool:
+            raise ValueError('save_data must only be boolean.')
+        self._save_data = sd
+
     def get_params(self):
         """Sets the `params` key (dict) of `output_dict` object prior to input to `a_vector_OLS_and_LP` method.
             - Uses metalog attributes to set keys
@@ -439,6 +512,8 @@ class metalog():
         params['term_lower_bound'] = self.term_lower_bound
         params['step_len'] = self.step_len
         params['fit_method'] = self.fit_method
+        params['nobs'] = self.nobs
+        params['save_data'] = self.save_data
 
         return params
 

@@ -206,6 +206,13 @@ def a_vector_OLS_and_LP(m_dict,
     m_dict['M']['y'] = temp_dict['y']
     m_dict['Validation'] = Validation
 
+    A = np.column_stack((np.repeat(1.,len(A)), A))
+    Est = np.dot(m_dict['Y'], A)
+    ncols = A.shape[1]
+    Z = np.column_stack((np.array(m_dict['dataValues']['z']),np.repeat(m_dict['dataValues']['z'],ncols-1).reshape(len(m_dict['dataValues']['z']),ncols-1)))
+
+    m_dict['square_residual_error'] = ((Z-Est)**2).sum(axis=1)
+
     return m_dict
 
 def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_step = 0.001):
