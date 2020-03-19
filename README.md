@@ -2,6 +2,8 @@ pymetalog
 ================
 Colin Smith, Travis Jefferies, Isaac J. Faber
 
+`pip install pymetalog`
+
 ### The Python Metalog Distribution
 
 This repo is a working project for a python package (**pymetalog**) that generates functions
