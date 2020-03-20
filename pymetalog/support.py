@@ -37,13 +37,13 @@ def MLprobs(x_old, step_len):
 
   #TODO method for turning off and on this n>100 estimation
   if len(x.index) > 100:
-      y2 = np.linspace(step_len, 1 - step_len, ((1 - step_len) / step_len))
+      y2 = np.linspace(step_len, 1 - step_len, int((1 - step_len) / step_len))
 
       tailstep = step_len / 10
 
-      y1 = np.linspace(tailstep, (min(y2) - tailstep), ((min(y2) - tailstep) / tailstep))
+      y1 = np.linspace(tailstep, (min(y2) - tailstep), int((min(y2) - tailstep) / tailstep))
 
-      y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), ((tailstep * 9) / tailstep))
+      y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), int((tailstep * 9) / tailstep))
 
       y = np.hstack((y1, y2, y3))
 
