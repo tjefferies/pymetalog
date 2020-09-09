@@ -169,7 +169,7 @@ def a_vector_OLS_and_LP(m_dict,
 
         # build a y vector for smaller data sets
         if len(z) < 100:
-            y2 = np.linspace(step_len, 1 - step_len, ((1 - step_len) / step_len))
+            y2 = np.linspace(step_len, 1 - step_len, int((1 - step_len) / step_len))
             tailstep = step_len / 10
             y1 = np.linspace(tailstep, (min(y2) - tailstep), ((min(y2) - tailstep) / tailstep))
             y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), ((tailstep * 9) / tailstep))
