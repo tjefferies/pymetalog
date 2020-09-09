@@ -209,7 +209,7 @@ def a_vector_OLS_and_LP(m_dict,
     A = np.column_stack((np.repeat(1.,len(A)), A))
     Est = np.dot(m_dict['Y'], A)
     ncols = A.shape[1]
-    Z = np.column_stack((np.array(m_dict['dataValues']['z']),np.repeat(m_dict['dataValues']['z'],ncols-1).reshape(len(m_dict['dataValues']['z']),ncols-1)))
+    Z = np.column_stack((np.array(m_dict['dataValues']['z']),np.repeat(m_dict['dataValues']['z'].values,ncols-1).reshape(len(m_dict['dataValues']['z']),ncols-1)))
 
     m_dict['square_residual_error'] = ((Z-Est)**2).sum(axis=1)
 
