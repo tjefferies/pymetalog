@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pymetalog",
-    version="0.1",
+    version="0.2.1",
     author="Colin Smith, Travis Jefferies, Isaac J. Faber",
     description="A python package that generates functions for the metalog distribution. The metalog distribution is a highly flexible probability distribution that can be used to model data without traditional parameters.",
     long_description=long_description,
