@@ -32,26 +32,3 @@ print("pmetalog demo: "+str(ps))
 # density from a quantile
 ds = pm.dmetalog(fish_metalog, q = [3, 10, 25], term = 9)
 print("dmetalog demo: "+str(ds))
-
-# Bayesian metalog updating
-# Will split dataset and fit to one part and update using other part
-
-np.random.seed(37)
-train_percent = 0.1
-
-training_idx = np.random.randint(fish_data.shape[0], size=int(fish_data.shape[0] * train_percent))
-test_idx = np.random.randint(fish_data.shape[0], size=int(fish_data.shape[0] * (1-train_percent)))
-training, test = fish_data[training_idx], fish_data[test_idx]
-
-fish_metalog = pm.metalog(x=training, bounds=[0,40], boundedness='b', term_limit=13, term_lower_bound=2, step_len=.001, penalty='l2', alpha=0.0001, save_data=True)
-
-pm.summary(fish_metalog)
-pm.plot(fish_metalog)
-plt.show()
-
-fish_metalog2 = pm.update(fish_metalog, test, penalty='l2', alpha=0.0001)
-
-pm.summary(fish_metalog2)
-pm.plot(fish_metalog2)
-plt.show()
-

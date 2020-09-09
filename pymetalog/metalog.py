@@ -272,54 +272,6 @@ class metalog():
             diff_error = .001,
             diff_step = 0.001)
 
-        # Build the Components for Baysiean Updating
-
-        if self.save_data & self.term_lower_bound <= 3:
-            Y = self.output_dict['Y']
-            gamma = np.dot(self.output_dict['Y'].T, self.output_dict['Y'])
-
-            self.output_dict['params']['bayes'] = {'gamma': gamma}
-            self.output_dict['params']['bayes']['mu'] = self.output_dict['A']
-            
-            v = list()
-            for i in range(term_lower_bound,term_limit+1):
-              v.append(self.output_dict['params']['nobs'] - i)
-            v = np.array(v)
-            a = v/2
-
-            self.output_dict['params']['bayes']['a'] = a
-            self.output_dict['params']['bayes']['v'] = v            
-
-            # for now, just using 3 term standard metalog
-            v = v[1]
-            a = a[1]
-            s = np.array([0.1, 0.5, 0.9])
-            Ys = np.repeat(1., 3)
-
-            Ys = np.column_stack([np.repeat(1, 3), np.log(s / (1 - s)), (s - 0.5)*np.log(s / (1 - s))])
-            three_term_metalog_fit_idx = 'a{}'.format(self.term_limit - 3)
-            q_bar = np.dot(Ys, self.output_dict['A'][three_term_metalog_fit_idx].values[-3:])
-
-            self.output_dict['params']['bayes']['q_bar'] = q_bar
-
-            # estimate b using q_90 assessment
-
-            est = (q_bar[2]-q_bar[1])/2 + q_bar[1]
-            s2 = ((q_bar[2] - q_bar[1]) / t.ppf(0.9,np.array(v)))**2
-
-            gamma = gamma[:3,:3]
-
-            # build covariance matrix for students t
-            sig = Ys.dot(np.linalg.solve(gamma, np.eye(len(gamma)))).dot(Ys.T)
-
-            # b = 0.5 * self.output_dict['params']['square_residual_error'][len(self.output_dict['params']['square_residual_error'])]
-            b = (a * s2) / gamma[1,1]
-            self.output_dict['params']['bayes']['sig'] = (b/a)*sig
-            self.output_dict['params']['bayes']['b'] = b
-
-        else:
-            del self.x
-
 
     # input validation...
     @property

@@ -169,7 +169,7 @@ def a_vector_OLS_and_LP(m_dict,
 
         # build a y vector for smaller data sets
         if len(z) < 100:
-            y2 = np.linspace(step_len, 1 - step_len, ((1 - step_len) / step_len))
+            y2 = np.linspace(step_len, 1 - step_len, int((1 - step_len) / step_len))
             tailstep = step_len / 10
             y1 = np.linspace(tailstep, (min(y2) - tailstep), ((min(y2) - tailstep) / tailstep))
             y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), ((tailstep * 9) / tailstep))
@@ -209,7 +209,7 @@ def a_vector_OLS_and_LP(m_dict,
     A = np.column_stack((np.repeat(1.,len(A)), A))
     Est = np.dot(m_dict['Y'], A)
     ncols = A.shape[1]
-    Z = np.column_stack((np.array(m_dict['dataValues']['z']),np.repeat(m_dict['dataValues']['z'],ncols-1).reshape(len(m_dict['dataValues']['z']),ncols-1)))
+    Z = np.column_stack((np.array(m_dict['dataValues']['z']),np.repeat(m_dict['dataValues']['z'].values,ncols-1).reshape(len(m_dict['dataValues']['z']),ncols-1)))
 
     m_dict['square_residual_error'] = ((Z-Est)**2).sum(axis=1)
 
