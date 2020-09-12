@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import scipy as sp
+
 from scipy.optimize import linprog, minimize, NonlinearConstraint
 from .pdf_quantile_functions import pdf_quantile_builder
 from .support import diffMatMetalog, pdfMetalog, quantileMetalog, newtons_method_metalog
@@ -160,19 +161,19 @@ def a_vector_OLS_and_LP(m_dict,
             except:
                 raise RuntimeError("OLS was unable to solve infeasible or poorly formulated problem")
         if fit_method == "LP":
-                temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
+            temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
+            methodFit = 'Linear Program'
 
         temp = np.append(temp, np.zeros(term_limit-i))
         if fit_method == 'MLE':
             temp = a_vector_MLE(temp, y, i, m_dict, bounds, boundedness)
-            temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness) # TODO: TAJ 05/18/2019 Recommend deleting - it has no effect since line 162 below executes either way and overwrites the `temp_dict` variable.
 
         # build a y vector for smaller data sets
         if len(z) < 100:
             y2 = np.linspace(step_len, 1 - step_len, int((1 - step_len) / step_len))
             tailstep = step_len / 10
-            y1 = np.linspace(tailstep, (min(y2) - tailstep), ((min(y2) - tailstep) / tailstep))
-            y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), ((tailstep * 9) / tailstep))
+            y1 = np.linspace(tailstep, (min(y2) - tailstep), int((min(y2) - tailstep) / tailstep))
+            y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), int((tailstep * 9) / tailstep))
             y = np.hstack((y1, y2, y3))
 
         # Get the dict and quantile values back for validation
