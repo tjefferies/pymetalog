@@ -153,8 +153,9 @@ def a_vector_OLS_and_LP(m_dict,
             try:
                 temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
             except:
-                temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
                 # use LP solver if OLS breaks
+                temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
+                methodFit = 'Linear Program'
         if fit_method == 'OLS':
             try:
                 temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
@@ -164,9 +165,10 @@ def a_vector_OLS_and_LP(m_dict,
             temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
             methodFit = 'Linear Program'
 
-        temp = np.append(temp, np.zeros(term_limit-i))
         if fit_method == 'MLE':
             temp = a_vector_MLE(temp, y, i, m_dict, bounds, boundedness)
+
+        temp = np.append(temp, np.zeros(term_limit-i))
 
         # build a y vector for smaller data sets
         if len(z) < 100:
