@@ -494,13 +494,13 @@ class metalog():
             cdf: (:float:value of Cumulative distribution function 
         """
         if not term:
-            term = self['params']['term_limit']
+            term = 2
             
         if term < 2:
             raise ValueError('minimum number of terms is 2')
         
         x = self.output_dict
-          # build plots
+        
         InitalResults = pd.DataFrame(data={
         'term':(np.repeat((str(x['params']['term_lower_bound'])+' Terms'), len(x['M'].iloc[:,0]))),
         'pdfValues':x['M'].iloc[:,0],
@@ -518,5 +518,5 @@ class metalog():
 
         InitalResults = InitalResults.append(pd.DataFrame(data=TempResults), ignore_index=True)
         
-        return InitalResults[InitalResults['term']==InitalResults.term.unique()[term-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[t-2]]['quantileValues']-value))]
+        return InitalResults[InitalResults['term']==InitalResults.term.unique()[term-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[t-2]]['quantileValues']-value))]['cumValue']
 
