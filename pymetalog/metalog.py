@@ -483,7 +483,7 @@ class metalog():
             raise KeyError()
         return self.output_dict[arr]
     
-    def cdf(self,value,term=self['params']['term_limit']):
+    def cdf(self,value,term=None):
         """Returns the Cumulative distribution function for the given value
         
         Inputs:
@@ -493,6 +493,9 @@ class metalog():
         Returns:
             cdf: (:float:value of Cumulative distribution function 
         """
+        if not term:
+            term = self['params']['term_limit']
+            
         if term < 2:
             raise ValueError('minimum number of terms is 2')
         
