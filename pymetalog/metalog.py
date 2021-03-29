@@ -483,20 +483,20 @@ class metalog():
             raise KeyError()
         return self.output_dict[arr]
     
-    def cdf(self,value,term=None):
+    def cdf(self,value,terms=None):
         """Returns the Cumulative distribution function for the given value
         
         Inputs:
             - 'value': value
-            - 'term': number of metalog terms
+            - 'terms': number of metalog terms, default 2
 
         Returns:
             cdf: (:float:value of Cumulative distribution function 
         """
-        if not term:
-            term = 2
+        if not terms:
+            terms = 2
             
-        if term < 2:
+        if terms < 2:
             raise ValueError('minimum number of terms is 2')
         
         x = self.output_dict
@@ -517,6 +517,6 @@ class metalog():
                   })
 
         InitalResults = InitalResults.append(pd.DataFrame(data=TempResults), ignore_index=True)
-        
-        return InitalResults[InitalResults['term']==InitalResults.term.unique()[term-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[t-2]]['quantileValues']-value))]['cumValue']
+                
+        return InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]]['quantileValues']-value))]['cumValue']
 
