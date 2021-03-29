@@ -491,7 +491,7 @@ class metalog():
             - 'terms': number of metalog terms, default 2
 
         Returns:
-            cdf: (:float:value of Cumulative distribution function 
+            cdf: (:obj:`float`): value of Cumulative distribution function
         """
         if not terms:
             terms = 2
