@@ -495,7 +495,8 @@ class metalog():
         """
         if not terms:
             terms = 2
-            
+        
+        terms=int(terms)    
         if terms < 2:
             raise ValueError('minimum number of terms is 2')
         
@@ -517,6 +518,10 @@ class metalog():
                   })
 
         InitalResults = InitalResults.append(pd.DataFrame(data=TempResults), ignore_index=True)
-                
-        return InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]]['quantileValues']-value))]['cumValue']
+        
+        if hasattr(value, "__len__"):
+            return np.array([InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]]['quantileValues']-v))]['cumValue'] for v in map(float,value)])
+        else:
+            value = float(value)
+            return InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]]['quantileValues']-value))]['cumValue']
 
