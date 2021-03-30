@@ -517,7 +517,7 @@ class metalog():
                     'cumValue':x['M']['y']
                   })
 
-        InitalResults = InitalResults.append(pd.DataFrame(data=TempResults), ignore_index=True)
+                InitalResults = InitalResults.append(pd.DataFrame(data=TempResults), ignore_index=True)
         
         if hasattr(value, "__len__"):
             return np.array([InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]].iloc[np.argmin(abs(InitalResults[InitalResults['term']==InitalResults.term.unique()[terms-2]]['quantileValues']-v))]['cumValue'] for v in map(float,value)])
