@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 from scipy.stats import t
 from .support import newtons_method_metalog, pdfMetalog_density
 from .metalog import metalog
@@ -389,7 +388,6 @@ def plot(m):
             )
 
     # PDF plot
-    sns.set()
     ymin = np.min(InitalResults["pdfValues"])
     ymax = np.max(InitalResults["pdfValues"])
     nterms = InitalResults.term.nunique()
