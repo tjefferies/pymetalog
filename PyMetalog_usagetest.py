@@ -1,13 +1,14 @@
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import pymetalog as pm
 
 
-fish_data = np.loadtxt('fishout.csv', delimiter=',', skiprows=1, dtype='str')[:,1].astype(np.float)
+fish_data = pm.example_data
 
 # metalog creation
-fish_metalog = pm.metalog(x=fish_data, bounds=[0,40], boundedness='b', term_limit=15, term_lower_bound=2, step_len=.001, penalty=None, save_data=True)
+fish_metalog = pm.metalog(x=fish_data, bounds=[0,40], boundedness='b', term_limit=15, term_lower_bound=2, step_len=.001, penalty=None)
 
 # summary function
 pm.summary(fish_metalog)
@@ -17,7 +18,7 @@ pm.plot(fish_metalog)
 plt.show()
 
 # # metalog random sampling
-r_gens = pm.rmetalog(fish_metalog, n = 1000, term = 9, generator='hdr')
+r_gens = pm.rmetalog(fish_metalog, n = 1000, term = 9, generator="hdr")
 plt.hist(r_gens,14)
 plt.show()
 
@@ -32,3 +33,4 @@ print("pmetalog demo: "+str(ps))
 # density from a quantile
 ds = pm.dmetalog(fish_metalog, q = [3, 10, 25], term = 9)
 print("dmetalog demo: "+str(ds))
+
