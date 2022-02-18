@@ -9,17 +9,20 @@ from .support import diffMatMetalog, pdfMetalog, quantileMetalog, newtons_method
 import time
 import warnings
 
-def a_vector_OLS_and_LP(m_dict,
-           bounds,
-           boundedness,
-           term_limit,
-           term_lower_bound,
-           fit_method,
-           alpha,
-           diff_error = .001,
-           diff_step = 0.001):
 
-    """ Main workhorse function of pymetalog package.
+def a_vector_OLS_and_LP(
+    m_dict,
+    bounds,
+    boundedness,
+    term_limit,
+    term_lower_bound,
+    fit_method,
+    alpha,
+    diff_error=0.001,
+    diff_step=0.001,
+):
+
+    """Main workhorse function of pymetalog package.
         Called during metalog.__init__ method call.
 
     Args:
@@ -115,7 +118,7 @@ def a_vector_OLS_and_LP(m_dict,
                             )
                 * pdf_1, pdf_2, ... , pdf_n are the metalog pdfs returned by pdf_quantile_builder.pdfMetalog method
                 * cdf_1, cdf_2, ... , cdf_n are the metalog quantiles returned by pdf_quantile_builder.quantileMetalog method
-            
+
             - m_dict['y']: (:obj: `numpy.ndarray` of type float):
                 * Array of bin widths for both the pdf_n and cdf_n
 
@@ -136,65 +139,101 @@ def a_vector_OLS_and_LP(m_dict,
     df_Validation_temp_list = list()
 
     # TODO: Large for-loop can probably be factored into smaller functions
-    for i in range(term_lower_bound,term_limit+1):
-        Y = m_dict['Y'].iloc[:,0:i]
+    for i in range(term_lower_bound, term_limit + 1):
+        Y = m_dict["Y"].iloc[:, 0:i]
         eye = np.eye(Y.shape[1])
-        z = m_dict['dataValues']['z']
-        y = m_dict['dataValues']['probs']
-        step_len = m_dict['params']['step_len']
-        methodFit = 'OLS'
-        a_name = 'a'+str(i)
-        m_name = 'm'+str(i)
-        M_name = 'M'+str(i)
+        z = m_dict["dataValues"]["z"]
+        y = m_dict["dataValues"]["probs"]
+        step_len = m_dict["params"]["step_len"]
+        methodFit = "OLS"
+        a_name = "a" + str(i)
+        m_name = "m" + str(i)
+        M_name = "M" + str(i)
         c_m_names = np.append(c_m_names, [m_name, M_name])
         c_a_names = np.append(c_a_names, a_name)
 
-        if fit_method == 'any' or fit_method == 'MLE':
+        if fit_method == "any" or fit_method == "MLE":
             try:
-                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
+                temp = np.dot(
+                    np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha * eye), Y.T), z
+                )
             except:
                 # use LP solver if OLS breaks
-                temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
-                methodFit = 'Linear Program'
-        if fit_method == 'OLS':
+                temp = a_vector_LP(
+                    m_dict,
+                    term_limit=i,
+                    term_lower_bound=i,
+                    diff_error=diff_error,
+                    diff_step=diff_step,
+                )
+                methodFit = "Linear Program"
+        if fit_method == "OLS":
             try:
-                temp = np.dot(np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha*eye), Y.T), z)
+                temp = np.dot(
+                    np.dot(np.linalg.inv(np.dot(Y.T, Y) + alpha * eye), Y.T), z
+                )
             except:
-                raise RuntimeError("OLS was unable to solve infeasible or poorly formulated problem")
+                raise RuntimeError(
+                    "OLS was unable to solve infeasible or poorly formulated problem"
+                )
         if fit_method == "LP":
-            temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
-            methodFit = 'Linear Program'
+            temp = a_vector_LP(
+                m_dict,
+                term_limit=i,
+                term_lower_bound=i,
+                diff_error=diff_error,
+                diff_step=diff_step,
+            )
+            methodFit = "Linear Program"
 
-        if fit_method == 'MLE':
+        if fit_method == "MLE":
             temp = a_vector_MLE(temp, y, i, m_dict, bounds, boundedness)
 
-        temp = np.append(temp, np.zeros(term_limit-i))
+        temp = np.append(temp, np.zeros(term_limit - i))
 
         # build a y vector for smaller data sets
         if len(z) < 100:
             y2 = np.linspace(step_len, 1 - step_len, int((1 - step_len) / step_len))
             tailstep = step_len / 10
-            y1 = np.linspace(tailstep, (min(y2) - tailstep), int((min(y2) - tailstep) / tailstep))
-            y3 = np.linspace((max(y2) + tailstep), (max(y2) + tailstep * 9), int((tailstep * 9) / tailstep))
+            y1 = np.linspace(
+                tailstep, (min(y2) - tailstep), int((min(y2) - tailstep) / tailstep)
+            )
+            y3 = np.linspace(
+                (max(y2) + tailstep),
+                (max(y2) + tailstep * 9),
+                int((tailstep * 9) / tailstep),
+            )
             y = np.hstack((y1, y2, y3))
 
         # Get the dict and quantile values back for validation
-        temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
+        temp_dict = pdf_quantile_builder(
+            temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness
+        )
 
         # If it not a valid pdf run and the OLS version was used the LP version
-        if (temp_dict['valid'] == 'no') and (fit_method != 'OLS'):
-            temp = a_vector_LP(m_dict, term_limit=i, term_lower_bound=i, diff_error=diff_error, diff_step=diff_step)
-            temp = np.append(temp, np.zeros(term_limit-i))
-            methodFit = 'Linear Program'
+        if (temp_dict["valid"] == "no") and (fit_method != "OLS"):
+            temp = a_vector_LP(
+                m_dict,
+                term_limit=i,
+                term_lower_bound=i,
+                diff_error=diff_error,
+                diff_step=diff_step,
+            )
+            temp = np.append(temp, np.zeros(term_limit - i))
+            methodFit = "Linear Program"
 
             # Get the dict and quantile values back for validation
-            temp_dict = pdf_quantile_builder(temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness)
+            temp_dict = pdf_quantile_builder(
+                temp, y=y, term_limit=i, bounds=bounds, boundedness=boundedness
+            )
 
-        df_MH_temp_list.append(pd.DataFrame(temp_dict['m']))
-        df_MH_temp_list.append(pd.DataFrame(temp_dict['M']))
+        df_MH_temp_list.append(pd.DataFrame(temp_dict["m"]))
+        df_MH_temp_list.append(pd.DataFrame(temp_dict["M"]))
         df_A_temp_list.append(pd.DataFrame(temp))
 
-        tempValidation = pd.DataFrame(data={'term': [i], 'valid': [temp_dict['valid']], 'method': [methodFit]})
+        tempValidation = pd.DataFrame(
+            data={"term": [i], "valid": [temp_dict["valid"]], "method": [methodFit]}
+        )
         df_Validation_temp_list.append(tempValidation)
 
     Validation = pd.concat(df_Validation_temp_list, axis=0)
@@ -204,46 +243,54 @@ def a_vector_OLS_and_LP(m_dict,
     A.columns = c_a_names
     Mh.columns = c_m_names
 
-    m_dict['A'] = A
-    m_dict['M'] = Mh
-    m_dict['M']['y'] = temp_dict['y']
-    m_dict['Validation'] = Validation
+    m_dict["A"] = A
+    m_dict["M"] = Mh
+    m_dict["M"]["y"] = temp_dict["y"]
+    m_dict["Validation"] = Validation
 
-    A = np.column_stack((np.repeat(1.,len(A)), A))
-    Est = np.dot(m_dict['Y'], A)
+    A = np.column_stack((np.repeat(1.0, len(A)), A))
+    Est = np.dot(m_dict["Y"], A)
     ncols = A.shape[1]
-    Z = np.column_stack((np.array(m_dict['dataValues']['z']),np.repeat(m_dict['dataValues']['z'].values,ncols-1).reshape(len(m_dict['dataValues']['z']),ncols-1)))
+    Z = np.column_stack(
+        (
+            np.array(m_dict["dataValues"]["z"]),
+            np.repeat(m_dict["dataValues"]["z"], ncols - 1).reshape(
+                len(m_dict["dataValues"]["z"]), ncols - 1
+            ),
+        )
+    )
 
-    m_dict['square_residual_error'] = ((Z-Est)**2).sum(axis=1)
+    m_dict["square_residual_error"] = ((Z - Est) ** 2).sum(axis=1)
 
     return m_dict
 
-def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_step = 0.001):
-    """TODO: write docstring
 
-    """
+def a_vector_LP(
+    m_dict, term_limit, term_lower_bound, diff_error=0.001, diff_step=0.001
+):
+    """TODO: write docstring"""
     cnames = np.array([])
 
     for i in range(term_lower_bound, term_limit + 1):
-        Y = m_dict['Y'].iloc[:, 0:i]
-        z = m_dict['dataValues']['z']
+        Y = m_dict["Y"].iloc[:, 0:i]
+        z = m_dict["dataValues"]["z"]
 
         # Bulding the objective function using abs value LP formulation
         Y_neg = -Y
 
-        new_Y = pd.DataFrame({'y1': Y.iloc[:, 0], 'y1_neg': Y_neg.iloc[:, 0]})
+        new_Y = pd.DataFrame({"y1": Y.iloc[:, 0], "y1_neg": Y_neg.iloc[:, 0]})
 
-        for c in range(1,len(Y.iloc[0,:])):
-            new_Y['y'+str(c+1)] = Y.iloc[:,c]
-            new_Y['y' + str(c+1)+'_neg'] = Y_neg.iloc[:, c]
+        for c in range(1, len(Y.iloc[0, :])):
+            new_Y["y" + str(c + 1)] = Y.iloc[:, c]
+            new_Y["y" + str(c + 1) + "_neg"] = Y_neg.iloc[:, c]
 
-        a = np.array([''.join(['a', str(i)])])
+        a = np.array(["".join(["a", str(i)])])
         cnames = np.append(cnames, a, axis=0)
 
         # Building the constraint matrix
         error_mat = np.array([])
 
-        for j in range(1,len(Y.iloc[:,0])+1):
+        for j in range(1, len(Y.iloc[:, 0]) + 1):
             front_zeros = np.zeros(2 * (j - 1))
             ones = [1, -1]
             trail_zeroes = np.zeros(2 * (len(Y.iloc[:, 1]) - j))
@@ -263,7 +310,7 @@ def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_st
         diff_mat = diffMatMetalog(i, diff_step)
         diff_zeros = []
 
-        for t in range(0,len(diff_mat.iloc[:, 0])):
+        for t in range(0, len(diff_mat.iloc[:, 0])):
             zeros_temp = np.zeros(2 * len(Y.iloc[:, 0]))
 
             if np.size(diff_zeros) == 0:
@@ -277,62 +324,81 @@ def a_vector_LP(m_dict, term_limit, term_lower_bound, diff_error = .001, diff_st
         lp_mat = np.concatenate((new, diff_mat), axis=0)
 
         # Objective function coeficients
-        c = np.append(np.ones(2 * len(Y.iloc[:, 1])), np.zeros(2*i))
+        c = np.append(np.ones(2 * len(Y.iloc[:, 1])), np.zeros(2 * i))
 
         # Constraint matrices
-        A_eq = lp_mat[:len(Y.iloc[:, 1]),:]
-        A_ub = -1*lp_mat[len(Y.iloc[:, 1]):,:]
+        A_eq = lp_mat[: len(Y.iloc[:, 1]), :]
+        A_ub = -1 * lp_mat[len(Y.iloc[:, 1]) :, :]
         b_eq = z
-        b_ub = -1*np.repeat(diff_error, len(diff_mat[:,0]))
+        b_ub = -1 * np.repeat(diff_error, len(diff_mat[:, 0]))
 
         # Solving the linear program w/ scipy (for now)
-        lp_sol = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, method='simplex', options={"maxiter":5000, "tol":1.0e-5,"disp": False})
+        lp_sol = linprog(
+            c,
+            A_ub=A_ub,
+            b_ub=b_ub,
+            A_eq=A_eq,
+            b_eq=b_eq,
+            method="simplex",
+            options={"maxiter": 5000, "tol": 1.0e-5, "disp": False},
+        )
 
         # Consolidating solution back into the a vector
-        tempLP = lp_sol.x[(2 * len(Y.iloc[:, 1])):(len(lp_sol.x)+1)]
+        tempLP = lp_sol.x[(2 * len(Y.iloc[:, 1])) : (len(lp_sol.x) + 1)]
         temp = []
 
-        for r in range(0,((len(tempLP) // 2))):
-            temp.append(tempLP[(r * 2)] - tempLP[(2 * r)+1])
+        for r in range(0, ((len(tempLP) // 2))):
+            temp.append(tempLP[(r * 2)] - tempLP[(2 * r) + 1])
 
     return temp
 
 
 def a_vector_MLE(a, y, term, m_dict, bounds, boundedness):
-    """TODO: write docstring
-
-    """
-    ym = [newtons_method_metalog(a, xi, term, bounds, boundedness) for xi in m_dict['dataValues']['x']]
+    """TODO: write docstring"""
+    ym = [
+        newtons_method_metalog(a, xi, term, bounds, boundedness)
+        for xi in m_dict["dataValues"]["x"]
+    ]
 
     def MLE_quantile_constraints(x):
-        M = [quantileMetalog(x[:term], yi, term, bounds=bounds, boundedness=boundedness) for yi in x[term:]]
-        return m_dict['dataValues']['x'] - M
+        M = [
+            quantileMetalog(x[:term], yi, term, bounds=bounds, boundedness=boundedness)
+            for yi in x[term:]
+        ]
+        return m_dict["dataValues"]["x"] - M
 
     def MLE_objective_function(x, y, term, m_dict):
-        return -np.sum([np.log10(pdfMetalog(x[:term], yi, term, bounds, boundedness)) for yi in np.absolute(x[term:])])
+        return -np.sum(
+            [
+                np.log10(pdfMetalog(x[:term], yi, term, bounds, boundedness))
+                for yi in np.absolute(x[term:])
+            ]
+        )
 
-    m_dict[str('MLE' + str(term))] = {}
+    m_dict[str("MLE" + str(term))] = {}
 
-    x0 = np.hstack((a[:term],ym))
-    m_dict[str('MLE' + str(term))]['oldobj'] = -MLE_objective_function(x0, y, term, m_dict)
-    bnd = ((None, None),)*len(a)+((0, 1),)*(len(x0)-len(a))
+    x0 = np.hstack((a[:term], ym))
+    m_dict[str("MLE" + str(term))]["oldobj"] = -MLE_objective_function(
+        x0, y, term, m_dict
+    )
+    bnd = ((None, None),) * len(a) + ((0, 1),) * (len(x0) - len(a))
     con = NonlinearConstraint(MLE_quantile_constraints, 0, 0)
 
-    mle = minimize(MLE_objective_function, x0, args=(y, term, m_dict), bounds=bnd, constraints=con)
+    mle = minimize(
+        MLE_objective_function, x0, args=(y, term, m_dict), bounds=bnd, constraints=con
+    )
 
-    m_dict[str('MLE' + str(term))]['newobj'] = -MLE_objective_function(mle.x, y, term, m_dict)
-    m_dict[str('MLE'+str(term))]['A'] = mle.x[:term]
-    m_dict[str('MLE'+str(term))]['Y'] = mle.x[term:]
+    m_dict[str("MLE" + str(term))]["newobj"] = -MLE_objective_function(
+        mle.x, y, term, m_dict
+    )
+    m_dict[str("MLE" + str(term))]["A"] = mle.x[:term]
+    m_dict[str("MLE" + str(term))]["Y"] = mle.x[term:]
 
-    m_dict[str('MLE' + str(term))]['oldA'] = a
-    m_dict[str('MLE' + str(term))]['oldY'] = y
+    m_dict[str("MLE" + str(term))]["oldA"] = a
+    m_dict[str("MLE" + str(term))]["oldY"] = y
 
     out_temp = np.zeros_like(a)
     for i in range(term):
         out_temp[i] = mle.x[i]
 
     return out_temp
-
-
-
-

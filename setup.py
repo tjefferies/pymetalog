@@ -17,4 +17,11 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    package_data={'pymetalog': ["examples/*"]},
+    install_requires=[
+        'numpy',
+        'pandas',
+        'scipy',
+        'seaborn',
+     ],
 )
