@@ -2,6 +2,18 @@ pymetalog
 ================
 Colin Smith, Travis Jefferies, Isaac J. Faber
 
+> [!IMPORTANT]
+> **This repository has been archived and is no longer maintained.**
+>
+> 👉 **Please visit the new repository: [metalog_jax](https://github.com/tjefferies/metalog_jax)**
+> 
+> **Issues and discussions on this repo are not monitored.**
+>
+> **Note:** The new repository is not a direct continuation of this project. It differs significantly in architecture / API / approach. If you're starting fresh, we recommend the new repo. If you depend on this codebase, be aware that ***no updates or fixes will be made here***.
+>
+> This repo remains available for historical reference only.
+---
+
 `pip install pymetalog`
 
 ### The Python Metalog Distribution
